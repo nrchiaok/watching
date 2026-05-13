@@ -12,11 +12,38 @@
             word-break: break-all;
             background-color: #ffffff;
             color: #000000;
-            line-height: 1.5; /* メモ帳に近い標準的な行間 */
+            line-height: 1.5;
         }
         .font-noto {
             font-family: 'Noto Sans JP', sans-serif;
         }
+        
+        /* 旧Windows風ボタンのスタイル */
+        .win95-button {
+            background-color: #c0c0c0;
+            border-top: 2px solid #ffffff;
+            border-left: 2px solid #ffffff;
+            border-right: 2px solid #808080;
+            border-bottom: 2px solid #808080;
+            padding: 2px 8px;
+            font-size: 11px;
+            font-family: "MS Sans Serif", "Arial", sans-serif;
+            color: #000000;
+            cursor: pointer;
+            outline: none;
+            user-select: none;
+            height: fit-content;
+            margin-top: auto;
+            margin-bottom: 4px;
+        }
+        .win95-button:active {
+            border-top: 2px solid #808080;
+            border-left: 2px solid #808080;
+            border-right: 2px solid #ffffff;
+            border-bottom: 2px solid #ffffff;
+            padding: 3px 7px 1px 9px;
+        }
+
         .log-item {
             animation: fadeIn 0.6s ease-out forwards;
         }
@@ -30,12 +57,16 @@
 
     <div class="max-w-4xl mx-auto min-h-screen flex flex-col p-8 md:p-12">
         
-        <header class="mb-12">
-            <!-- 新しいロゴファイル名 logo.tora.svg を指定 -->
-            <img src="./logo.tora.svg" alt="watching" class="w-[180px] md:w-[240px] h-auto">
+        <header class="mb-12 flex items-start gap-4">
+            <!-- ロゴ画像：デフォルトは logo.svg -->
+            <img id="title-logo" src="./logo.svg" alt="watching" class="w-[180px] md:w-[240px] h-auto">
+            
+            <!-- 旧Windows風切り替えボタン -->
+            <button id="toggle-tora" class="win95-button" onclick="toggleLogo()">
+                とらを表示
+            </button>
         </header>
 
-        <!-- つぶやき同士の間隔を最小限に設定 -->
         <main id="log-container" class="flex-1 space-y-2">
             <div id="loading" class="text-gray-300 text-sm italic">Connecting to archive...</div>
         </main>
@@ -48,6 +79,24 @@
 
     <script>
         const API_URL = 'https://script.google.com/macros/s/AKfycbxvO7ikFEHdMcEOq7V5vYgURUcmNRNiX3hGYRgxaUzTFkoDYssxiMXzBty2quZ3o91U/exec';
+        let isToraVisible = false;
+
+        function toggleLogo() {
+            const logoImg = document.getElementById('title-logo');
+            const btn = document.getElementById('toggle-tora');
+            
+            if (!isToraVisible) {
+                // とらを表示
+                logoImg.src = './logo.tora.svg';
+                btn.innerText = 'とらを非表示';
+                isToraVisible = true;
+            } else {
+                // とらを非表示（デフォルトに戻す）
+                logoImg.src = './logo.svg';
+                btn.innerText = 'とらを表示';
+                isToraVisible = false;
+            }
+        }
 
         async function fetchLogs() {
             const container = document.getElementById('log-container');
@@ -76,11 +125,6 @@
 
             logs.forEach((log, index) => {
                 const div = document.createElement('div');
-                /* 
-                   border-t: 区切り線
-                   pt-6: 区切り線からテキストまでの距離
-                   pb-2: 下部の微細な余白
-                */
                 const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-6 pb-2';
                 div.className = `log-item ${borderClass}`;
                 
