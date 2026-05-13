@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Watching Timeline</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📱 Watching Timeline</h1>
+            <p>Watching の時間軸</p>
+        </header>
+
+        <div class="form-section">
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLScP3Ak7iDk56pDNDuScyhi44RYfyua0JltXyX_w0_9uNC_kxA/viewform?usp=publish-editor" target="_blank" class="btn-form">
+                📝 add "watching"
+            </a>
+        </div>
+
+        <div class="timeline" id="timeline">
+            <p class="loading">読み込み中...</p>
+        </div>
+    </div>
+
+    <script>
+        const SPREADSHEET_ID = '1BQA90iL1Z5j1phl8UGyiQ_3huk2mEKSWbqiOa2NHna8';
+        const SHEET_NAME = 'フォームの回答 1';
+        const GOOGLE_FORM_LINK = 'https://docs.google.com/forms/d/e/1FAIpQLScP3Ak7iDk56pDNDuScyhi44RYfyua0JltXyX_w0_9uNC_kxA/viewform?usp=publish-editor';
+
+        async function fetchWatchingData() {
+            const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/query?tq=select%20*&key=AIzaSyDaRr6zxpEokJydz4wI_T9AW7eKXNbZCOQ`;
+            
+            try {
+                const response = await fetch(url);
+                const text = await response.text();
+                const jsonData = JSON.parse(text.substring(47).slice(0, -2));
+                
+                const rows = jsonData.table.rows;
+                const timeline = document.getElementById('timeline');
+                timeline.innerHTML = '';
+
+                if (rows.length === 0) {
+                    timeline.innerHTML = '<p class="empty">まだ watching がありません</p>';
+                    return;
+                }
+
+                // 逆順で表示（新しい順）
+                for (let i = rows.length - 1; i >= 0; i--) {
+                    const row = rows[i];
+                    const timestamp = row.c[0]?.v || '日時不明';
+                    const comment = row.c[1]?.v || '内容なし';
+                    const name = row.c[2]?.v || '名前なし';
+
+                    const watchingElement = document.createElement('div');
+                    watchingElement.className = 'watching-item';
+                    watchingElement.innerHTML = `
+                        <div class="watching-header">
+                            <span class="watching-name">${escapeHtml(name)}</span>
+                            <span class="watching-time">${timestamp}</span>
+                        </div>
+                        <div class="watching-content">
+                            ${escapeHtml(comment)}
+                        </div>
+                        <div class="watching-actions">
+                            <button class="btn-edit" onclick="editWatching(${i})">✏️ 編集</button>
+                            <button class="btn-delete" onclick="deleteWatching(${i})">🗑️ 削除</button>
+                        </div>
+                    `;
+                    timeline.appendChild(watchingElement);
+                }
+            } catch (error) {
+                console.error('エラー:', error);
+                document.getElementById('timeline').innerHTML = '<p class="error">データ読み込みエラー</p>';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function editWatching(index) {
+            alert(`編集するには、スプレッドシートを開いて${index + 2}行目を編集してください。\n\nスプレッドシート: https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`);
+            window.open(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`, '_blank');
+        }
+
+        function deleteWatching(index) {
+            if (confirm(`この watching を削除しますか？\n\nスプレッドシートの${index + 2}行目を削除してください。`)) {
+                alert(`スプレッドシートを開いて${index + 2}行目を削除してください。`);
+                window.open(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`, '_blank');
+            }
+        }
+
+        // 初回読み込み
+        fetchWatchingData();
+
+        // 30秒ごとに自動更新
+        setInterval(fetchWatchingData, 30000);
+    </script>
+</body>
+</html>
