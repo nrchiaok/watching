@@ -26,46 +26,72 @@
 
     <script>
         const SPREADSHEET_ID = '1BQA90iL1Z5j1phl8UGyiQ_3huk2mEKSWbqiOa2NHna8';
-        const SHEET_NAME = 'フォームの回答 1';
         const GOOGLE_FORM_LINK = 'https://docs.google.com/forms/d/e/1FAIpQLScP3Ak7iDk56pDNDuScyhi44RYfyua0JltXyX_w0_9uNC_kxA/viewform?usp=publish-editor';
 
         async function fetchWatchingData() {
-            const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/gviz/query?tq=select%20*&key=AIzaSyDaRr6zxpEokJydz4wI_T9AW7eKXNbZCOQ`;
-            
             try {
-                const response = await fetch(url);
-                const text = await response.text();
-                const jsonData = JSON.parse(text.substring(47).slice(0, -2));
+                // Google Sheets APIを使用してデータ取得
+                const apiKey = 'AIzaSyDaRr6zxpEokJydz4wI_T9AW7eKXNbZCOQ';
+                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?key=${apiKey}&includeGridData=true`;
                 
-                const rows = jsonData.table.rows;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                // シートからデータ取得
+                const sheets = data.sheets;
+                if (!sheets || sheets.length === 0) {
+                    document.getElementById('timeline').innerHTML = '<p class="empty">データが見つかりません</p>';
+                    return;
+                }
+                
+                // 最初のシートを使用
+                const sheetData = sheets[0].data[0];
+                const rows = sheetData.rowData;
+                
+                if (!rows || rows.length <= 1) {
+                    document.getElementById('timeline').innerHTML = '<p class="empty">まだ watching がありません</p>';
+                    return;
+                }
+                
                 const timeline = document.getElementById('timeline');
                 timeline.innerHTML = '';
-
-                if (rows.length === 0) {
+                
+                // ヘッダー行をスキップ（1行目）して、2行目以降を処理
+                const watchingItems = [];
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i];
+                    if (!row.values || row.values.length === 0) continue;
+                    
+                    const timestamp = row.values[0]?.userEnteredValue?.stringValue || row.values[0]?.formattedValue || '日時不明';
+                    const comment = row.values[1]?.userEnteredValue?.stringValue || row.values[1]?.formattedValue || '内容なし';
+                    const name = row.values[2]?.userEnteredValue?.stringValue || row.values[2]?.formattedValue || '名前なし';
+                    
+                    if (comment && comment !== '内容な���') {
+                        watchingItems.push({ timestamp, comment, name, index: i });
+                    }
+                }
+                
+                if (watchingItems.length === 0) {
                     timeline.innerHTML = '<p class="empty">まだ watching がありません</p>';
                     return;
                 }
-
+                
                 // 逆順で表示（新しい順）
-                for (let i = rows.length - 1; i >= 0; i--) {
-                    const row = rows[i];
-                    const timestamp = row.c[0]?.v || '日時不明';
-                    const comment = row.c[1]?.v || '内容なし';
-                    const name = row.c[2]?.v || '名前なし';
-
+                for (let i = watchingItems.length - 1; i >= 0; i--) {
+                    const item = watchingItems[i];
                     const watchingElement = document.createElement('div');
                     watchingElement.className = 'watching-item';
                     watchingElement.innerHTML = `
                         <div class="watching-header">
-                            <span class="watching-name">${escapeHtml(name)}</span>
-                            <span class="watching-time">${timestamp}</span>
+                            <span class="watching-name">${escapeHtml(item.name)}</span>
+                            <span class="watching-time">${item.timestamp}</span>
                         </div>
                         <div class="watching-content">
-                            ${escapeHtml(comment)}
+                            ${escapeHtml(item.comment)}
                         </div>
                         <div class="watching-actions">
-                            <button class="btn-edit" onclick="editWatching(${i})">✏️ 編集</button>
-                            <button class="btn-delete" onclick="deleteWatching(${i})">🗑️ 削除</button>
+                            <button class="btn-edit" onclick="editWatching(${item.index})">✏️ 編集</button>
+                            <button class="btn-delete" onclick="deleteWatching(${item.index})">🗑️ 削除</button>
                         </div>
                     `;
                     timeline.appendChild(watchingElement);
@@ -83,13 +109,13 @@
         }
 
         function editWatching(index) {
-            alert(`編集するには、スプレッドシートを開いて${index + 2}行目を編集してください。\n\nスプレッドシート: https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`);
+            alert(`編集するには、スプレッドシートを開いて${index + 1}行目を編集してください。\n\nスプレッドシート: https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`);
             window.open(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`, '_blank');
         }
 
         function deleteWatching(index) {
-            if (confirm(`この watching を削除しますか？\n\nスプレッドシートの${index + 2}行目を削除してください。`)) {
-                alert(`スプレッドシートを開いて${index + 2}行目を削除してください。`);
+            if (confirm(`この watching を削除しますか？\n\nスプレッドシートの${index + 1}行目を削除してください。`)) {
+                alert(`スプレッドシートを開いて${index + 1}行目を削除してください。`);
                 window.open(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`, '_blank');
             }
         }
