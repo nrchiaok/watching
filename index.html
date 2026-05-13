@@ -12,6 +12,7 @@
             word-break: break-all;
             background-color: #ffffff;
             color: #000000;
+            line-height: 1.5; /* メモ帳に近い標準的な行間 */
         }
         .font-noto {
             font-family: 'Noto Sans JP', sans-serif;
@@ -20,8 +21,8 @@
             animation: fadeIn 0.6s ease-out forwards;
         }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
@@ -30,13 +31,13 @@
     <div class="max-w-4xl mx-auto min-h-screen flex flex-col p-8 md:p-12">
         
         <header class="mb-12">
-            <!-- タイトル：テキストから画像（logo.svg）に置き換え 
-                 w-[数字] でサイズを調整します。PC(md)では少し大きくしています -->
+            <!-- イラレで作成したロゴを配置。サイズはお好みでw-の数字を調整してください -->
             <img src="./logo.svg" alt="watching" class="w-[180px] md:w-[240px] h-auto">
         </header>
 
-        <main id="log-container" class="flex-1 space-y-8">
-            <div id="loading" class="text-gray-300 text-lg italic">Connecting to archive...</div>
+        <!-- space-y-2でつぶやき同士の全体の間隔を最小限に。内部の余白で調整します -->
+        <main id="log-container" class="flex-1 space-y-2">
+            <div id="loading" class="text-gray-300 text-sm italic">Connecting to archive...</div>
         </main>
         
         <footer class="mt-16 pb-8 opacity-5">
@@ -75,13 +76,18 @@
 
             logs.forEach((log, index) => {
                 const div = document.createElement('div');
-                // 2つ目以降のログの上にだけ細い区切り線を入れる
-                const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-8';
+                /* 
+                   border-t: 区切り線
+                   pt-6: 区切り線からテキストまでの距離（行間の約1.5倍程度に設定）
+                   pb-2: テキスト下の微細な余白
+                   index === 0 の場合は一番上なので線を消す
+                */
+                const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-6 pb-2';
                 div.className = `log-item ${borderClass}`;
                 
                 div.innerHTML = `
-                    <time class="block mb-2 text-[11px] text-[#0000ff] font-normal tracking-wider">${log.timestamp}</time>
-                    <p class="text-[14px] leading-relaxed text-black font-normal">${log.content}</p>
+                    <time class="block mb-1 text-[11.2px] text-[#0000ff] font-normal tracking-wider">${log.timestamp}</time>
+                    <p class="text-[14px] leading-normal text-black font-normal">${log.content}</p>
                 `;
                 container.appendChild(div);
             });
