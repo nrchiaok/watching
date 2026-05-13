@@ -13,37 +13,39 @@
             background-color: #ffffff;
             color: #000000;
         }
-        .font-montserrat {
-            font-family: 'Montserrat', sans-serif;
+        .font-headline {
+            /* 指定のStack Sans Headlineを優先し、環境にない場合はMontserratを適用 */
+            font-family: 'Stack Sans Headline', 'Montserrat', sans-serif;
         }
         .font-noto {
             font-family: 'Noto Sans JP', sans-serif;
         }
-        /* アニメーション：ふわっと表示させる */
         .log-item {
-            animation: fadeIn 0.8s ease-out forwards;
+            animation: fadeIn 0.6s ease-out forwards;
         }
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body class="font-noto">
 
-    <div class="max-w-4xl mx-auto min-h-screen flex flex-col p-8 md:p-16">
+    <div class="max-w-4xl mx-auto min-h-screen flex flex-col p-8 md:p-12">
         
-        <header class="mb-20">
-            <h1 class="text-7xl md:text-8xl font-bold font-montserrat tracking-tighter uppercase">watching</h1>
+        <header class="mb-12">
+            <!-- サイズを80%に縮小（text-7xl程度）し、斜体を解除 -->
+            <h1 class="text-5xl md:text-7xl font-bold font-headline tracking-tighter uppercase leading-none">watching</h1>
         </header>
 
-        <main id="log-container" class="flex-1 space-y-16">
-            <div id="loading" class="text-gray-300 text-2xl italic font-noto">Connecting to archive...</div>
+        <!-- 間隔を詰める（space-y-8） -->
+        <main id="log-container" class="flex-1 space-y-8">
+            <div id="loading" class="text-gray-300 text-lg italic">Connecting to archive...</div>
         </main>
         
-        <footer class="mt-24 pb-12 opacity-10">
+        <footer class="mt-16 pb-8 opacity-5">
             <div class="h-px bg-black w-full"></div>
-            <div class="mt-4 text-xs font-montserrat tracking-widest uppercase">End of Log</div>
+            <div class="mt-2 text-[10px] font-headline tracking-widest uppercase">End of Log</div>
         </footer>
     </div>
 
@@ -61,11 +63,7 @@
                 const logs = await response.json();
                 renderLogs(logs);
             } catch (e) {
-                loading.innerHTML = `
-                    <div class="text-red-400 text-xl font-noto">
-                        Failed to load.<br>
-                        <span class="text-sm opacity-50">Please check GAS permissions or URL.</span>
-                    </div>`;
+                loading.innerHTML = `<div class="text-red-400 text-sm">Failed to load.</div>`;
                 console.error('Fetch error:', e);
             }
         }
@@ -75,23 +73,24 @@
             container.innerHTML = '';
             
             if (!logs || logs.length === 0) {
-                container.innerHTML = '<div class="text-gray-300 text-2xl italic font-noto">No records found.</div>';
+                container.innerHTML = '<div class="text-gray-300 text-sm italic">No records found.</div>';
                 return;
             }
 
             logs.forEach((log, index) => {
                 const div = document.createElement('div');
-                /* 
-                   区切り線のロジック: 
-                   最初の項目以外(index !== 0)に、ごく細い線(border-t border-black/5)を付与。
-                   透明度を5%まで下げることで、実線でありながら髪の毛のような細さを表現します。
-                */
-                const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-16';
+                // 間隔を詰め、境界線を付与
+                const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-8';
                 div.className = `log-item ${borderClass}`;
                 
+                /* 
+                   サイズ調整のロジック:
+                   本文: 14px (従来の28pxの半分)
+                   日時: 11px (本文14pxの約40%。ブラウザの視認限界を考慮し11pxに設定)
+                */
                 div.innerHTML = `
-                    <time class="font-noto text-[11.2px] block mb-4 text-[#0000ff] font-normal tracking-wider">${log.timestamp}</time>
-                    <p class="font-noto text-[28px] leading-relaxed text-black font-normal">${log.content}</p>
+                    <time class="block mb-2 text-[11px] text-[#0000ff] font-normal tracking-wider">${log.timestamp}</time>
+                    <p class="text-[14px] leading-relaxed text-black font-normal">${log.content}</p>
                 `;
                 container.appendChild(div);
             });
