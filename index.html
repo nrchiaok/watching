@@ -25,7 +25,7 @@
             border-left: 2px solid #ffffff;
             border-right: 2px solid #808080;
             border-bottom: 2px solid #808080;
-            padding: 2px 8px;
+            padding: 4px 12px;
             font-size: 11px;
             font-family: "MS Sans Serif", "Arial", sans-serif;
             color: #000000;
@@ -33,15 +33,14 @@
             outline: none;
             user-select: none;
             height: fit-content;
-            margin-top: auto;
-            margin-bottom: 4px;
+            white-space: nowrap; /* 改行防止 */
         }
         .win95-button:active {
             border-top: 2px solid #808080;
             border-left: 2px solid #808080;
             border-right: 2px solid #ffffff;
             border-bottom: 2px solid #ffffff;
-            padding: 3px 7px 1px 9px;
+            padding: 5px 11px 3px 13px; /* 凹んだように見せる */
         }
 
         .log-item {
@@ -57,9 +56,9 @@
 
     <div class="max-w-4xl mx-auto min-h-screen flex flex-col p-8 md:p-12">
         
-        <header class="mb-12 flex items-start gap-4">
-            <!-- ロゴ画像：デフォルトは logo.svg -->
-            <img id="title-logo" src="./logo.svg" alt="watching" class="w-[180px] md:w-[240px] h-auto">
+        <header class="mb-12 flex items-center gap-6"> <!-- items-centerで垂直中央揃えに変更 -->
+            <!-- ロゴ画像 -->
+            <img id="title-logo" src="./logo.svg" alt="watching" class="w-[180px] md:w-[240px] h-auto block">
             
             <!-- 旧Windows風切り替えボタン -->
             <button id="toggle-tora" class="win95-button" onclick="toggleLogo()">
@@ -86,13 +85,13 @@
             const btn = document.getElementById('toggle-tora');
             
             if (!isToraVisible) {
-                // とらを表示
-                logoImg.src = './logo.tora.svg';
+                // とらを表示。末尾にタイムスタンプを付与してキャッシュを回避
+                logoImg.src = './logo.tora.svg?t=' + new Date().getTime();
                 btn.innerText = 'とらを非表示';
                 isToraVisible = true;
             } else {
-                // とらを非表示（デフォルトに戻す）
-                logoImg.src = './logo.svg';
+                // デフォルトに戻す
+                logoImg.src = './logo.svg?t=' + new Date().getTime();
                 btn.innerText = 'とらを表示';
                 isToraVisible = false;
             }
@@ -125,6 +124,7 @@
 
             logs.forEach((log, index) => {
                 const div = document.createElement('div');
+                /* 1つ目の要素以外に区切り線を入れる */
                 const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-6 pb-2';
                 div.className = `log-item ${borderClass}`;
                 
