@@ -31,11 +31,11 @@
     <div class="max-w-4xl mx-auto min-h-screen flex flex-col p-8 md:p-12">
         
         <header class="mb-12">
-            <!-- イラレで作成したロゴを配置。サイズはお好みでw-の数字を調整してください -->
-            <img src="./logo.svg" alt="watching" class="w-[180px] md:w-[240px] h-auto">
+            <!-- 新しいロゴファイル名 logo.tora.svg を指定 -->
+            <img src="./logo.tora.svg" alt="watching" class="w-[180px] md:w-[240px] h-auto">
         </header>
 
-        <!-- space-y-2でつぶやき同士の全体の間隔を最小限に。内部の余白で調整します -->
+        <!-- つぶやき同士の間隔を最小限に設定 -->
         <main id="log-container" class="flex-1 space-y-2">
             <div id="loading" class="text-gray-300 text-sm italic">Connecting to archive...</div>
         </main>
@@ -78,9 +78,8 @@
                 const div = document.createElement('div');
                 /* 
                    border-t: 区切り線
-                   pt-6: 区切り線からテキストまでの距離（行間の約1.5倍程度に設定）
-                   pb-2: テキスト下の微細な余白
-                   index === 0 の場合は一番上なので線を消す
+                   pt-6: 区切り線からテキストまでの距離
+                   pb-2: 下部の微細な余白
                 */
                 const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-6 pb-2';
                 div.className = `log-item ${borderClass}`;
