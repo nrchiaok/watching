@@ -3,128 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Watching Timeline</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Galtraben REAL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono&family=Inter:wght@400&family=Noto+Serif+JP:wght@300&display=swap');
+        body { -webkit-tap-highlight-color: transparent; }
+        .font-mono-custom { font-family: 'Space Mono', monospace; }
+        .font-sans-custom { font-family: 'Inter', sans-serif; }
+        .font-serif-custom { font-family: 'Noto Serif JP', serif; }
+        .active-tab { background: #000; color: #fff; }
+        .hidden { display: none; }
+    </style>
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>📱 Watching Timeline</h1>
-            <p>Watching の時間軸</p>
+<body id="body" class="bg-[#F8F9FA] text-[#1A1A1A] transition-colors duration-500 min-h-screen">
+
+    <div class="max-w-md mx-auto min-h-screen flex flex-col bg-white shadow-xl border-x border-gray-100">
+        <header class="p-8 pt-12 border-b border-gray-100">
+            <h1 class="text-2xl font-black tracking-tighter italic">Galtraben</h1>
+            <p class="text-[10px] text-gray-400 uppercase tracking-[0.3em] mt-1">Project LOG / REAL</p>
+            
+            <div class="mt-8 flex gap-1 p-1 bg-gray-100 rounded-xl">
+                <button onclick="switchStyle('plain')" id="btn-plain" class="flex-1 py-2 text-[10px] font-bold rounded-lg active-tab">PLAIN</button>
+                <button onclick="switchStyle('modern')" id="btn-modern" class="flex-1 py-2 text-[10px] font-bold rounded-lg">MODERN</button>
+                <button onclick="switchStyle('dark')" id="btn-dark" class="flex-1 py-2 text-[10px] font-bold rounded-lg">DARK</button>
+            </div>
         </header>
 
-        <div class="form-section">
-            <a href="https://docs.google.com/forms/d/e/1FAIpQLScP3Ak7iDk56pDNDuScyhi44RYfyua0JltXyX_w0_9uNC_kxA/viewform?usp=publish-editor" target="_blank" class="btn-form">
-                📝 add "watching"
-            </a>
-        </div>
-
-        <div class="timeline" id="timeline">
-            <p class="loading">読み込み中...</p>
-        </div>
+        <main id="log-container" class="flex-1 p-8 py-10 space-y-10 font-mono-custom">
+            <div id="loading" class="text-center text-gray-300 text-xs animate-pulse italic">Loading Archive...</div>
+        </main>
     </div>
 
     <script>
-        const SPREADSHEET_ID = '1BQA90iL1Z5j1phl8UGyiQ_3huk2mEKSWbqiOa2NHna8';
-        const GOOGLE_FORM_LINK = 'https://docs.google.com/forms/d/e/1FAIpQLScP3Ak7iDk56pDNDuScyhi44RYfyua0JltXyX_w0_9uNC_kxA/viewform?usp=publish-editor';
+        // 【重要】ここにGASで取得したURLを貼り付けてください
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxvO7ikFEHdMcEOq7V5vYgURUcmNRNiX3hGYRgxaUzTFkoDYssxiMXzBty2quZ3o91U/exec';
 
-        async function fetchWatchingData() {
+        let currentStyle = 'plain';
+
+        async function fetchLogs() {
             try {
-                // Google Sheets APIを使用してデータ取得
-                const apiKey = 'AIzaSyDaRr6zxpEokJydz4wI_T9AW7eKXNbZCOQ';
-                const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}?key=${apiKey}&includeGridData=true`;
-                
-                const response = await fetch(url);
-                const data = await response.json();
-                
-                // シートからデータ取得
-                const sheets = data.sheets;
-                if (!sheets || sheets.length === 0) {
-                    document.getElementById('timeline').innerHTML = '<p class="empty">データが見つかりません</p>';
-                    return;
-                }
-                
-                // 最初のシートを使用
-                const sheetData = sheets[0].data[0];
-                const rows = sheetData.rowData;
-                
-                if (!rows || rows.length <= 1) {
-                    document.getElementById('timeline').innerHTML = '<p class="empty">まだ watching がありません</p>';
-                    return;
-                }
-                
-                const timeline = document.getElementById('timeline');
-                timeline.innerHTML = '';
-                
-                // ヘッダー行をスキップ（1行目）して、2行目以降を処理
-                const watchingItems = [];
-                for (let i = 1; i < rows.length; i++) {
-                    const row = rows[i];
-                    if (!row.values || row.values.length === 0) continue;
-                    
-                    const timestamp = row.values[0]?.userEnteredValue?.stringValue || row.values[0]?.formattedValue || '日時不明';
-                    const comment = row.values[1]?.userEnteredValue?.stringValue || row.values[1]?.formattedValue || '内容なし';
-                    const name = row.values[2]?.userEnteredValue?.stringValue || row.values[2]?.formattedValue || '名前なし';
-                    
-                    if (comment && comment !== '内容な���') {
-                        watchingItems.push({ timestamp, comment, name, index: i });
-                    }
-                }
-                
-                if (watchingItems.length === 0) {
-                    timeline.innerHTML = '<p class="empty">まだ watching がありません</p>';
-                    return;
-                }
-                
-                // 逆順で表示（新しい順）
-                for (let i = watchingItems.length - 1; i >= 0; i--) {
-                    const item = watchingItems[i];
-                    const watchingElement = document.createElement('div');
-                    watchingElement.className = 'watching-item';
-                    watchingElement.innerHTML = `
-                        <div class="watching-header">
-                            <span class="watching-name">${escapeHtml(item.name)}</span>
-                            <span class="watching-time">${item.timestamp}</span>
-                        </div>
-                        <div class="watching-content">
-                            ${escapeHtml(item.comment)}
-                        </div>
-                        <div class="watching-actions">
-                            <button class="btn-edit" onclick="editWatching(${item.index})">✏️ 編集</button>
-                            <button class="btn-delete" onclick="deleteWatching(${item.index})">🗑️ 削除</button>
-                        </div>
-                    `;
-                    timeline.appendChild(watchingElement);
-                }
-            } catch (error) {
-                console.error('エラー:', error);
-                document.getElementById('timeline').innerHTML = '<p class="error">データ読み込みエラー</p>';
+                const response = await fetch(API_URL);
+                const logs = await response.json();
+                renderLogs(logs);
+            } catch (e) {
+                document.getElementById('loading').innerText = 'Failed to load logs.';
+                console.error(e);
             }
         }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+        function renderLogs(logs) {
+            const container = document.getElementById('log-container');
+            container.innerHTML = '';
+            
+            if (logs.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-300 text-xs italic">No logs found.</div>';
+                return;
+            }
+
+            logs.forEach(log => {
+                const div = document.createElement('div');
+                div.className = 'log-item transition-all duration-300';
+                div.innerHTML = `
+                    <time class="text-[9px] text-gray-400 block mb-2 opacity-60">${log.timestamp}</time>
+                    <p class="content-text text-[13px] leading-relaxed border-l border-black/10 pl-4">${log.content}</p>
+                `;
+                container.appendChild(div);
+            });
+            updateStyles();
         }
 
-        function editWatching(index) {
-            alert(`編集するには、スプレッドシートを開いて${index + 1}行目を編集してください。\n\nスプレッドシート: https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`);
-            window.open(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`, '_blank');
+        function switchStyle(type) {
+            currentStyle = type;
+            ['plain', 'modern', 'dark'].forEach(t => document.getElementById('btn-' + t).classList.remove('active-tab'));
+            document.getElementById('btn-' + type).classList.add('active-tab');
+            updateStyles();
         }
 
-        function deleteWatching(index) {
-            if (confirm(`この watching を削除しますか？\n\nスプレッドシートの${index + 1}行目を削除してください。`)) {
-                alert(`スプレッドシートを開いて${index + 1}行目を削除してください。`);
-                window.open(`https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit`, '_blank');
+        function updateStyles() {
+            const container = document.getElementById('log-container');
+            const body = document.getElementById('body');
+            const items = document.querySelectorAll('.content-text');
+
+            if (currentStyle === 'plain') {
+                body.style.backgroundColor = '#F8F9FA';
+                container.className = 'flex-1 p-8 py-10 space-y-10 font-mono-custom text-[#1A1A1A]';
+                items.forEach(p => p.className = 'content-text text-[12px] leading-relaxed border-l border-black/10 pl-4');
+            } else if (currentStyle === 'modern') {
+                body.style.backgroundColor = '#FFFFFF';
+                container.className = 'flex-1 p-8 py-10 space-y-4 font-sans-custom text-gray-700';
+                items.forEach(p => p.className = 'content-text text-[14px] leading-relaxed p-4 bg-gray-50 rounded-xl border border-gray-100');
+            } else if (currentStyle === 'dark') {
+                body.style.backgroundColor = '#0D0D0D';
+                container.className = 'flex-1 p-8 py-10 space-y-12 font-serif-custom text-gray-300';
+                items.forEach(p => p.className = 'content-text text-[16px] leading-loose italic opacity-80');
             }
         }
 
-        // 初回読み込み
-        fetchWatchingData();
-
-        // 30秒ごとに自動更新
-        setInterval(fetchWatchingData, 30000);
+        window.onload = fetchLogs;
     </script>
 </body>
 </html>
