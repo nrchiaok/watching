@@ -3,42 +3,51 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galtraben REAL</title>
+    <title>watching</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono&family=Inter:wght@400&family=Noto+Serif+JP:wght@300&display=swap');
-        body { -webkit-tap-highlight-color: transparent; }
-        .font-mono-custom { font-family: 'Space Mono', monospace; }
-        .font-sans-custom { font-family: 'Inter', sans-serif; }
-        .font-serif-custom { font-family: 'Noto Serif JP', serif; }
-        .active-tab { background: #000; color: #fff; }
-        .hidden { display: none; }
+        :root {
+            --base-font-size: 26px; /* 元の約2倍のサイズを基準に設定 */
+        }
+        body {
+            -webkit-tap-highlight-color: transparent;
+            word-break: break-all;
+        }
+        /* ヘルベチカ（タイトル用） */
+        .font-helvetica {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+        }
+        /* Microsoft Sans Serif（日時用） */
+        .font-ms-sans {
+            font-family: 'Microsoft Sans Serif', 'Arial', sans-serif;
+        }
+        /* Noto Sans JP（本文用） */
+        .font-noto {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
     </style>
 </head>
-<body id="body" class="bg-[#F8F9FA] text-[#1A1A1A] transition-colors duration-500 min-h-screen">
+<body id="body" class="bg-white text-black transition-colors duration-500 min-h-screen font-noto">
 
-    <div class="max-w-md mx-auto min-h-screen flex flex-col bg-white shadow-xl border-x border-gray-100">
-        <header class="p-8 pt-12 border-b border-gray-100">
-            <h1 class="text-2xl font-black tracking-tighter italic">Galtraben</h1>
-            <p class="text-[10px] text-gray-400 uppercase tracking-[0.3em] mt-1">Project LOG / REAL</p>
-            
-            <div class="mt-8 flex gap-1 p-1 bg-gray-100 rounded-xl">
-                <button onclick="switchStyle('plain')" id="btn-plain" class="flex-1 py-2 text-[10px] font-bold rounded-lg active-tab">PLAIN</button>
-                <button onclick="switchStyle('modern')" id="btn-modern" class="flex-1 py-2 text-[10px] font-bold rounded-lg">MODERN</button>
-                <button onclick="switchStyle('dark')" id="btn-dark" class="flex-1 py-2 text-[10px] font-bold rounded-lg">DARK</button>
-            </div>
+    <div class="max-w-4xl mx-auto min-h-screen flex flex-col p-8 md:p-16">
+        <header class="mb-20">
+            <!-- タイトルをwatchingに変更、斜体解除、Helvetica、サイズ2倍 -->
+            <h1 class="text-7xl font-bold font-helvetica tracking-tighter">watching</h1>
         </header>
 
-        <main id="log-container" class="flex-1 p-8 py-10 space-y-10 font-mono-custom">
-            <div id="loading" class="text-center text-gray-300 text-xs animate-pulse italic">Loading Archive...</div>
+        <main id="log-container" class="flex-1 space-y-16">
+            <div id="loading" class="text-gray-300 text-xl italic">Loading...</div>
         </main>
+        
+        <footer class="mt-20 pb-10 opacity-20">
+            <div class="h-px bg-black w-full"></div>
+        </footer>
     </div>
 
     <script>
-        // 【重要】ここにGASで取得したURLを貼り付けてください
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxvO7ikFEHdMcEOq7V5vYgURUcmNRNiX3hGYRgxaUzTFkoDYssxiMXzBty2quZ3o91U/exec';
-
-        let currentStyle = 'plain';
+        // 【重要】ここにあなたのGASのURLを貼り付けてください
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyrVunEj9ahlnOb3iI0gt6bvZ233pLesEwUbO9P69Y/dev';
 
         async function fetchLogs() {
             try {
@@ -46,7 +55,7 @@
                 const logs = await response.json();
                 renderLogs(logs);
             } catch (e) {
-                document.getElementById('loading').innerText = 'Failed to load logs.';
+                document.getElementById('loading').innerText = 'Failed to load.';
                 console.error(e);
             }
         }
@@ -56,49 +65,27 @@
             container.innerHTML = '';
             
             if (logs.length === 0) {
-                container.innerHTML = '<div class="text-center text-gray-300 text-xs italic">No logs found.</div>';
+                container.innerHTML = '<div class="text-gray-300 text-xl italic">No records.</div>';
                 return;
             }
 
             logs.forEach(log => {
                 const div = document.createElement('div');
-                div.className = 'log-item transition-all duration-300';
+                div.className = 'log-item group animate-in fade-in duration-700';
+                
+                /* 
+                   日時のフォントサイズは本文(28px)の60% = 約16.8px
+                   本文のフォントサイズは従来の倍 = 28px
+                */
                 div.innerHTML = `
-                    <time class="text-[9px] text-gray-400 block mb-2 opacity-60">${log.timestamp}</time>
-                    <p class="content-text text-[13px] leading-relaxed border-l border-black/10 pl-4">${log.content}</p>
+                    <time class="font-ms-sans text-[16.8px] block mb-3 text-black leading-none">${log.timestamp}</time>
+                    <p class="content-text text-[28px] leading-relaxed text-black">${log.content}</p>
                 `;
                 container.appendChild(div);
             });
-            updateStyles();
         }
 
-        function switchStyle(type) {
-            currentStyle = type;
-            ['plain', 'modern', 'dark'].forEach(t => document.getElementById('btn-' + t).classList.remove('active-tab'));
-            document.getElementById('btn-' + type).classList.add('active-tab');
-            updateStyles();
-        }
-
-        function updateStyles() {
-            const container = document.getElementById('log-container');
-            const body = document.getElementById('body');
-            const items = document.querySelectorAll('.content-text');
-
-            if (currentStyle === 'plain') {
-                body.style.backgroundColor = '#F8F9FA';
-                container.className = 'flex-1 p-8 py-10 space-y-10 font-mono-custom text-[#1A1A1A]';
-                items.forEach(p => p.className = 'content-text text-[12px] leading-relaxed border-l border-black/10 pl-4');
-            } else if (currentStyle === 'modern') {
-                body.style.backgroundColor = '#FFFFFF';
-                container.className = 'flex-1 p-8 py-10 space-y-4 font-sans-custom text-gray-700';
-                items.forEach(p => p.className = 'content-text text-[14px] leading-relaxed p-4 bg-gray-50 rounded-xl border border-gray-100');
-            } else if (currentStyle === 'dark') {
-                body.style.backgroundColor = '#0D0D0D';
-                container.className = 'flex-1 p-8 py-10 space-y-12 font-serif-custom text-gray-300';
-                items.forEach(p => p.className = 'content-text text-[16px] leading-loose italic opacity-80');
-            }
-        }
-
+        // ページ読み込み時に実行
         window.onload = fetchLogs;
     </script>
 </body>
