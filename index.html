@@ -7,16 +7,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            /* 日本語は游ゴシック Pr6N、英数字はArial */
-            font-family: Arial, "Hiragino Sans", "Yu Gothic Pr6N", "Yu Gothic", "Noto Sans JP", sans-serif;
-            font-weight: 400; /* 全て標準の太さ */
+            /* 英数字はArial、日本語は游ゴシック Pr6N Rを優先、太さは標準固定 */
+            font-family: Arial, "Yu Gothic Pr6N", "Yu Gothic", "Noto Sans JP", sans-serif;
+            font-weight: 400;
             background-color: #ffffff;
             color: #000000;
-            line-height: 1.5; 
             -webkit-font-smoothing: antialiased;
         }
-
-        /* 旧Windows風ボタン */
+        /* Win95/98風ボタン */
         .win95-button {
             background: #c0c0c0;
             border-top: 2px solid #ffffff;
@@ -42,11 +40,10 @@
             border-bottom: 2px solid #ffffff;
             padding: 3px 7px 1px 9px;
         }
-
-        /* リンクのスタイル */
-        .link { color: #0000ff; text-decoration: underline; }
-
-        /* スケルトンアニメーション */
+        .link {
+            color: #0000ff;
+            text-decoration: underline;
+        }
         .skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
             background-size: 200% 100%;
@@ -67,9 +64,9 @@
         <button id="toggle-btn" class="win95-button" onclick="toggleLogo()">とらを表示</button>
     </header>
 
-    <main id="log-container" class="space-y-4">
-        <div id="loading-placeholder" class="space-y-10">
-            <div class="pt-5 border-t border-black/[0.06]">
+    <main id="log-container" class="space-y-8">
+        <div id="loading-placeholder" class="space-y-6">
+            <div class="pt-2 border-t border-black/[0.06]">
                 <div class="h-3 w-20 skeleton mb-2"></div>
                 <div class="h-4 w-full skeleton"></div>
             </div>
@@ -77,8 +74,7 @@
     </main>
 
     <script>
-        // デプロイしたウェブアプリのURLに書き換えてください
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbxc-v1WhwjhYLGoH0q6kwrJXRfKReHAspS7z23bd47J3A1MXbvZyTxIez3nQmXlMfku/exec';
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbxtq4Qy5ElrlaQH7vKMtU4u8rLhc9ee1etGwvi1kHvzf8Z18oMCO_usBr3F6YJh1Gtj/exec';
         let isTora = false;
 
         function toggleLogo() {
@@ -95,7 +91,6 @@
             }
         }
 
-        // 本文内のURLを自動リンク化
         function linkify(text) {
             const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
             return text.replace(urlPattern, '<a href="$1" target="_blank" class="link">$1</a>');
@@ -117,40 +112,43 @@
 
             logs.forEach((log, index) => {
                 const logItem = document.createElement('div');
-                // 区切り線とつぶやきの間隔を半分（pt-10 から pt-5）に縮小
-                const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-5';
+                // 区切り線と文字の間の余白を前回のさらに半分(pt-2)に調整
+                const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-2';
                 logItem.className = `flex flex-col ${borderClass}`;
 
-                // 日時（Arial / 11.2px / 青色 / 標準の太さ / 文頭整列）
+                // 日時 (Arial / 11.2px / #0000ff)
                 const timeStr = document.createElement('span');
-                timeStr.className = 'text-[#0000ff] font-normal leading-none mb-1';
+                timeStr.className = 'text-[#0000ff] mb-1';
                 timeStr.style.fontSize = '11.2px';
-                timeStr.style.fontFamily = 'Arial, sans-serif';
+                timeStr.style.lineHeight = '1';
                 timeStr.textContent = log.timestamp;
 
-                // 本文（14px / 游ゴシック体 Pr6N / 標準の太さ / 行間1.5）
+                // 本文 (14px / 行間1.5)
                 const content = document.createElement('div');
-                content.className = 'text-[14px] leading-[1.5] whitespace-pre-wrap mb-6';
-                content.innerHTML = linkify(log.content);
+                content.className = 'text-[14px] leading-[1.5] whitespace-pre-wrap mb-4';
+                content.innerHTML = linkify(log.content || "");
 
                 logItem.appendChild(timeStr);
                 logItem.appendChild(content);
 
-                // 写真ギャラリー（スマホ：70%幅中央寄せ / PC：横4枚・等幅グリッド）
+                // 写真表示
                 if (log.photos && log.photos.length > 0) {
                     const gallery = document.createElement('div');
-                    gallery.className = 'flex flex-wrap gap-[14px] w-full pb-4';
+                    gallery.className = 'flex flex-wrap gap-[14px] w-full';
                     
                     log.photos.forEach(url => {
                         const imgWrapper = document.createElement('div');
-                        // スマホ：幅70%中央寄せ。PC：幅25%から1文字分(14px)の隙間を計算して引く。
+                        // スマホ: 70%幅中央, PC: 25%幅グリッド
                         imgWrapper.className = 'w-[70%] mx-auto md:mx-0 md:w-[calc(25%-10.5px)]';
                         
                         const img = document.createElement('img');
                         img.src = url;
-                        // PCで比率が違っても面積が同じに見えるよう object-cover を使用
-                        img.className = 'w-full h-auto md:h-[180px] object-cover bg-gray-50';
+                        img.className = 'w-full h-[180px] object-cover bg-gray-50';
                         img.loading = 'lazy';
+                        // スマホ等で画像が読み込めない場合の予備
+                        img.onerror = function() {
+                            this.style.display = 'none';
+                        };
                         
                         imgWrapper.appendChild(img);
                         gallery.appendChild(imgWrapper);
