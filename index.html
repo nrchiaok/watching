@@ -3,36 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@nrchi watching</title>
+    <title>nrchi watching</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
     <style>
         body {
-            -webkit-tap-highlight-color: transparent;
-            word-break: break-all;
+            font-family: 'Stack Sans Headline', 'Montserrat', 'Helvetica', 'Arial', sans-serif;
             background-color: #ffffff;
             color: #000000;
-            line-height: 1.5;
         }
-        .font-noto {
-            font-family: 'Noto Sans JP', sans-serif;
-        }
-        
-        /* 旧Windows風ボタンのスタイル */
+        /* Win95/98風ボタンの再現 */
         .win95-button {
-            background-color: #c0c0c0;
+            background: #c0c0c0;
             border-top: 2px solid #ffffff;
             border-left: 2px solid #ffffff;
             border-right: 2px solid #808080;
             border-bottom: 2px solid #808080;
-            padding: 4px 12px;
+            padding: 2px 8px;
             font-size: 11px;
-            font-family: "MS Sans Serif", "Arial", sans-serif;
             color: #000000;
             cursor: pointer;
-            outline: none;
-            user-select: none;
-            height: fit-content;
+            outline: 1px solid #000000;
+            margin-left: 12px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             white-space: nowrap;
         }
         .win95-button:active {
@@ -40,98 +36,109 @@
             border-left: 2px solid #808080;
             border-right: 2px solid #ffffff;
             border-bottom: 2px solid #ffffff;
-            padding: 5px 11px 3px 13px;
+            padding: 3px 7px 1px 9px;
         }
-
-        .log-item {
-            animation: fadeIn 0.6s ease-out forwards;
+        /* スケルトンアニメーション */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
     </style>
 </head>
-<body class="font-noto">
+<body class="p-6 md:p-12 max-w-3xl mx-auto">
 
-    <div class="max-w-4xl mx-auto min-h-screen flex flex-col p-8 md:p-12">
-        
-        <header class="mb-12 flex items-center gap-6">
-            <!-- 以前より高さを少し抑えました（32px→26px / 48px→38px） -->
-            <img id="title-logo" src="./logo.svg" alt="watching" class="h-[26px] md:h-[38px] w-auto block transition-all duration-300">
-            
-            <button id="toggle-tora" class="win95-button" onclick="toggleLogo()">
-                とらを表示
-            </button>
-        </header>
+    <!-- ヘッダーエリア：ロゴとボタンを中央で揃える -->
+    <header class="mb-8 flex items-center">
+        <div id="logo-container" class="flex-shrink-0">
+            <img id="main-logo" src="./logo.svg" alt="watching" class="h-[26px] md:h-[38px] w-auto">
+        </div>
+        <button id="toggle-btn" class="win95-button" onclick="toggleLogo()">とらを表示</button>
+    </header>
 
-        <main id="log-container" class="flex-1 space-y-2">
-            <div id="loading" class="text-gray-300 text-sm italic">Connecting to archive...</div>
-        </main>
-        
-        <footer class="mt-16 pb-8 opacity-5">
-            <div class="h-px bg-black w-full"></div>
-            <div class="mt-2 text-[10px] tracking-widest uppercase">End of Log</div>
-        </footer>
-    </div>
+    <!-- メインログエリア -->
+    <main id="log-container" class="space-y-4">
+        <!-- 読み込み中のスケルトン表示 -->
+        <div id="loading-placeholder" class="space-y-6">
+            <div class="pt-4 border-t border-black/[0.06]">
+                <div class="h-3 w-20 skeleton mb-2"></div>
+                <div class="h-4 w-full skeleton mb-1"></div>
+                <div class="h-4 w-2/3 skeleton"></div>
+            </div>
+            <div class="pt-4 border-t border-black/[0.06]">
+                <div class="h-3 w-24 skeleton mb-2"></div>
+                <div class="h-4 w-full skeleton mb-1"></div>
+                <div class="h-4 w-1/2 skeleton"></div>
+            </div>
+        </div>
+    </main>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxvO7ikFEHdMcEOq7V5vYgURUcmNRNiX3hGYRgxaUzTFkoDYssxiMXzBty2quZ3o91U/exec';
-        let isToraVisible = false;
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbycakY2v4gb9JN4oehCosRm_MucFMt3hd_FW5ZMPx9Ypktzc4qQKcFilo2BLdOF4P6C/exec';
+        let isTora = false;
 
+        // ロゴ切り替え機能
         function toggleLogo() {
-            const logoImg = document.getElementById('title-logo');
-            const btn = document.getElementById('toggle-tora');
-            
-            if (!isToraVisible) {
-                logoImg.src = './logo.tora.svg?t=' + new Date().getTime();
-                btn.innerText = 'とらを非表示';
-                isToraVisible = true;
+            const logoImg = document.getElementById('main-logo');
+            const btn = document.getElementById('toggle-btn');
+            isTora = !isTora;
+
+            // キャッシュを回避するためにタイムスタンプを付与
+            const timestamp = new Date().getTime();
+            if (isTora) {
+                logoImg.src = `./logo.tora.svg?t=${timestamp}`;
+                btn.textContent = 'とらを非表示';
             } else {
-                logoImg.src = './logo.svg?t=' + new Date().getTime();
-                btn.innerText = 'とらを表示';
-                isToraVisible = false;
+                logoImg.src = `./logo.svg?t=${timestamp}`;
+                btn.textContent = 'とらを表示';
             }
         }
 
+        // データの取得と表示
         async function fetchLogs() {
-            const container = document.getElementById('log-container');
-            const loading = document.getElementById('loading');
-
             try {
-                const response = await fetch(`${API_URL}?t=${new Date().getTime()}`);
-                if (!response.ok) throw new Error('Network response was not ok');
-                
-                const logs = await response.json();
-                renderLogs(logs);
-            } catch (e) {
-                loading.innerHTML = `<div class="text-red-400 text-sm">Failed to load.</div>`;
-                console.error('Fetch error:', e);
+                const response = await fetch(gasUrl);
+                const data = await response.json();
+                renderLogs(data);
+            } catch (error) {
+                console.error('Error fetching logs:', error);
+                document.getElementById('log-container').innerHTML = 
+                    '<p class="text-red-500 text-sm">データの読み込みに失敗しました。</p>';
             }
         }
 
         function renderLogs(logs) {
             const container = document.getElementById('log-container');
-            container.innerHTML = '';
-            
-            if (!logs || logs.length === 0) {
-                container.innerHTML = '<div class="text-gray-300 text-sm italic">No records found.</div>';
-                return;
-            }
+            container.innerHTML = ''; // スケルトンを消去
 
             logs.forEach((log, index) => {
-                const div = document.createElement('div');
-                const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-6 pb-2';
-                div.className = `log-item ${borderClass}`;
-                
-                div.innerHTML = `
-                    <time class="block mb-1 text-[11.2px] text-[#0000ff] font-normal tracking-wider">${log.timestamp}</time>
-                    <p class="text-[14px] leading-normal text-black font-normal">${log.content}</p>
-                `;
-                container.appendChild(div);
+                const logItem = document.createElement('div');
+                // 2つ目以降のログの上にだけ区切り線を入れる
+                const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-4';
+                logItem.className = `flex flex-col ${borderClass} mb-4`;
+
+                // 日時（本文の40%サイズ、青色）
+                const timeStr = document.createElement('span');
+                timeStr.className = 'text-[#0000ff] font-bold leading-none mb-1';
+                timeStr.style.fontSize = '11px'; 
+                timeStr.textContent = log.timestamp;
+
+                // 本文（14px、標準的な行間）
+                const content = document.createElement('p');
+                content.className = 'text-[14px] text-black leading-normal whitespace-pre-wrap';
+                content.textContent = log.content;
+
+                logItem.appendChild(timeStr);
+                logItem.appendChild(content);
+                container.appendChild(logItem);
             });
         }
 
+        // ページ読み込み時に実行
         window.onload = fetchLogs;
     </script>
 </body>
