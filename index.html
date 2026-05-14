@@ -7,14 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            /* 英数字はArial、日本語は游ゴシック Pr6N Rを優先、太さは標準固定 */
             font-family: Arial, "Yu Gothic Pr6N", "Yu Gothic", "Noto Sans JP", sans-serif;
             font-weight: 400;
             background-color: #ffffff;
             color: #000000;
             -webkit-font-smoothing: antialiased;
         }
-        /* Win95/98風ボタン */
         .win95-button {
             background: #c0c0c0;
             border-top: 2px solid #ffffff;
@@ -40,10 +38,7 @@
             border-bottom: 2px solid #ffffff;
             padding: 3px 7px 1px 9px;
         }
-        .link {
-            color: #0000ff;
-            text-decoration: underline;
-        }
+        .link { color: #0000ff; text-decoration: underline; }
         .skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
             background-size: 200% 100%;
@@ -64,7 +59,6 @@
         <button id="toggle-btn" class="win95-button" onclick="toggleLogo()">とらを表示</button>
     </header>
 
-    <!-- ログ全体の間隔を縮小 -->
     <main id="log-container" class="space-y-4">
         <div id="loading-placeholder" class="space-y-4">
             <div class="pt-2 border-t border-black/[0.06]">
@@ -75,8 +69,7 @@
     </main>
 
     <script>
-        // 必ず最新のGASウェブアプリURLがここに入っているか確認してください
-        const gasUrl = 'https://script.google.com/macros/s/AKfycby6oyNGoj3Kl2aRPZ4EXwu3yg6nefFzSyqfoIoJLJNSRkogX-W13tTRIglOozt_kVwd/exec';
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbwoEmWYkLIlaUxfHBBldFTj_qwWn7KOVTAq11I_SOK6p8Bl5-BU42gbncZgXNiYNLUq/exec';
         let isTora = false;
 
         function toggleLogo() {
@@ -84,13 +77,8 @@
             const btn = document.getElementById('toggle-btn');
             isTora = !isTora;
             const timestamp = new Date().getTime();
-            if (isTora) {
-                logoImg.src = `./logo.tora.svg?t=${timestamp}`;
-                btn.textContent = 'とらを非表示';
-            } else {
-                logoImg.src = `./logo.svg?t=${timestamp}`;
-                btn.textContent = 'とらを表示';
-            }
+            logoImg.src = isTora ? `./logo.tora.svg?t=${timestamp}` : `./logo.svg?t=${timestamp}`;
+            btn.textContent = isTora ? 'とらを非表示' : 'とらを表示';
         }
 
         function linkify(text) {
@@ -114,18 +102,15 @@
 
             logs.forEach((log, index) => {
                 const logItem = document.createElement('div');
-                // 区切り線の上の余白を pt-2 に最小化
                 const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-2';
                 logItem.className = `flex flex-col ${borderClass}`;
 
-                // 日時 (Arial / 11.2px / #0000ff)
                 const timeStr = document.createElement('span');
                 timeStr.className = 'text-[#0000ff] mb-1';
                 timeStr.style.fontSize = '11.2px';
                 timeStr.style.lineHeight = '1';
                 timeStr.textContent = log.timestamp;
 
-                // 本文 (14px / 行間1.5) - 下の余白(mb-4等)を完全に削除
                 const content = document.createElement('div');
                 content.className = 'text-[14px] leading-[1.5] whitespace-pre-wrap';
                 content.innerHTML = linkify(log.content || "");
@@ -133,10 +118,8 @@
                 logItem.appendChild(timeStr);
                 logItem.appendChild(content);
 
-                // 写真表示
                 if (log.photos && log.photos.length > 0) {
                     const gallery = document.createElement('div');
-                    // 写真がある場合も下の余白を削除、本文との間隔は最小限に
                     gallery.className = 'flex flex-wrap gap-[14px] w-full mt-2';
                     
                     log.photos.forEach(url => {
@@ -146,17 +129,13 @@
                         const img = document.createElement('img');
                         img.src = url;
                         img.className = 'w-full h-[180px] object-cover bg-gray-50';
-                        // スマホで表示されない原因だった loading="lazy" を削除しています
-                        img.onerror = function() {
-                            this.style.display = 'none';
-                        };
+                        img.onerror = function() { this.style.display = 'none'; };
                         
                         imgWrapper.appendChild(img);
                         gallery.appendChild(imgWrapper);
                     });
                     logItem.appendChild(gallery);
                 }
-
                 container.appendChild(logItem);
             });
         }
