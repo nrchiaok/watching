@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>nrchi watching</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400&display=swap" rel="stylesheet">
     <style>
         /* 
            全体フォント設定
@@ -12,7 +13,7 @@
            日本語には各OSの標準的なゴシック体を適用します。
         */
         body {
-            font-family: Arial, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+            font-family: Arial, "Hiragino Sans", "Yu Gothic Pr6N", "Yu Gothic", "YuGothic", "Meiryo", "Noto Sans JP", sans-serif;
             font-weight: 400; /* 太さを標準（Normal）に固定 */
             background-color: #ffffff;
             color: #000000;
@@ -59,10 +60,10 @@
             margin-bottom: 4px;
         }
 
-        /* 本文専用スタイル（Arialを優先 / 標準の太さ / 28px） */
+        /* 本文専用スタイル（Arialを優先 / 標準の太さ / 14px） */
         .log-content {
-            font-family: Arial, "Hiragino Sans", "Meiryo", sans-serif;
-            font-size: 28px;
+            font-family: Arial, "Hiragino Sans", "Yu Gothic Pr6N", "Yu Gothic", "YuGothic", "Meiryo", "Noto Sans JP", sans-serif;
+            font-size: 14px;
             font-weight: 400;
             color: #000000;
             white-space: pre-wrap;
@@ -90,6 +91,7 @@
     </header>
 
     <main id="log-container" class="space-y-10">
+        <!-- 読み込み中のスケルトン -->
         <div id="loading-placeholder" class="space-y-10">
             <div class="pt-6 border-t border-black/[0.06]">
                 <div class="h-3 w-20 skeleton mb-2"></div>
