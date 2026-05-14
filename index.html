@@ -5,22 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>nrchi watching</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
     <style>
-        /* 
-           全体フォント設定
-           Arialを先頭に置くことで、英数字にはArialを、
-           日本語には各OSの標準的なゴシック体を適用します。
-        */
         body {
-            font-family: Arial, "Hiragino Sans", "Yu Gothic Pr6N", "Yu Gothic", "YuGothic", "Meiryo", "Noto Sans JP", sans-serif;
-            font-weight: 400; /* 太さを標準（Normal）に固定 */
+            /* 日本語は游ゴシック Pr6N Rを最優先、英数字はArial */
+            font-family: Arial, "Hiragino Sans", "Yu Gothic Pr6N", "Yu Gothic", "YuGothic", "Meiryo", sans-serif;
+            font-weight: 400;
             background-color: #ffffff;
             color: #000000;
-            line-height: 1.5; /* メモ帳に近い標準的な行間 */
+            line-height: 1.5; 
         }
 
-        /* Win95/98風ボタン */
+        /* 旧Windows風ボタン */
         .win95-button {
             background: #c0c0c0;
             border-top: 2px solid #ffffff;
@@ -38,8 +34,6 @@
             align-items: center;
             justify-content: center;
             white-space: nowrap;
-            font-family: Arial, sans-serif;
-            font-weight: 400;
         }
         .win95-button:active {
             border-top: 2px solid #808080;
@@ -49,7 +43,7 @@
             padding: 3px 7px 1px 9px;
         }
 
-        /* タイムスタンプ専用スタイル（Arial / 青色 / 11.2px） */
+        /* タイムスタンプ: 本文(14px)の40% = 11.2px, 青色, 標準の太さ */
         .timestamp {
             font-family: Arial, sans-serif;
             color: #0000ff;
@@ -60,15 +54,52 @@
             margin-bottom: 4px;
         }
 
-        /* 本文専用スタイル（Arialを優先 / 標準の太さ / 14px） */
+        /* つぶやき本文: 14px, 游ゴシック, 標準の太さ */
         .log-content {
-            font-family: Arial, "Hiragino Sans", "Yu Gothic Pr6N", "Yu Gothic", "YuGothic", "Meiryo", "Noto Sans JP", sans-serif;
             font-size: 14px;
             font-weight: 400;
             color: #000000;
             white-space: pre-wrap;
+            word-break: break-all;
         }
 
+        .log-content a {
+            color: #0000ff;
+            text-decoration: underline;
+        }
+
+        /* ギャラリーのレイアウト設定 */
+        .image-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            /* つぶやきの1文字分(14px)の等間隔 */
+            gap: 14px;
+        }
+
+        .log-image {
+            /* スマホ: 画面幅の70%で中央寄せ、1枚ずつ並ぶ */
+            width: 70%;
+            margin-left: auto;
+            margin-right: auto;
+            height: auto;
+            object-fit: cover;
+            border-radius: 4px;
+            aspect-ratio: 1 / 1; /* 正方形に近い比率で面積を統一 */
+        }
+
+        @media (min-width: 768px) {
+            .log-image {
+                /* PC: 横に最大4枚並ぶように計算 (100% / 4 - 隙間分) */
+                /* 異なる比率でも面積が近く見えるよう、固定高さを設定してobject-coverで切り抜き表示 */
+                width: calc(25% - 10.5px);
+                height: 180px; 
+                margin-left: 0;
+                margin-right: 0;
+            }
+        }
+
+        /* スケルトンアニメーション */
         .skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
             background-size: 200% 100%;
@@ -80,10 +111,9 @@
         }
     </style>
 </head>
-<body class="p-6 md:p-12 max-w-4xl mx-auto">
+<body class="p-6 md:p-12 max-w-3xl mx-auto">
 
     <header class="mb-12 flex items-center">
-        <!-- ロゴの高さに合わせてボタンの中央を揃える -->
         <div id="logo-container" class="flex-shrink-0 flex items-center">
             <img id="main-logo" src="./logo.svg" alt="watching" class="h-[26px] md:h-[38px] w-auto">
         </div>
@@ -91,7 +121,7 @@
     </header>
 
     <main id="log-container" class="space-y-10">
-        <!-- 読み込み中のスケルトン -->
+        <!-- 読み込み中のプレースホルダー -->
         <div id="loading-placeholder" class="space-y-10">
             <div class="pt-6 border-t border-black/[0.06]">
                 <div class="h-3 w-20 skeleton mb-2"></div>
@@ -118,6 +148,11 @@
             }
         }
 
+        function linkify(text) {
+            const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+            return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>');
+        }
+
         async function fetchLogs() {
             try {
                 const response = await fetch(gasUrl);
@@ -135,21 +170,40 @@
 
             logs.forEach((log, index) => {
                 const logItem = document.createElement('div');
-                const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-6';
+                // 区切り線との間隔（つぶやきの行間の約1.8倍）
+                const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-10';
                 logItem.className = `flex flex-col ${borderClass}`;
 
-                // 日時エリア
+                // 日時
                 const timeStr = document.createElement('span');
                 timeStr.className = 'timestamp';
                 timeStr.textContent = log.timestamp;
 
-                // 本文エリア
+                // 本文
                 const content = document.createElement('p');
                 content.className = 'log-content';
-                content.textContent = log.content;
+                content.innerHTML = linkify(log.content);
 
                 logItem.appendChild(timeStr);
                 logItem.appendChild(content);
+
+                // 画像ギャラリー
+                if (log.images && log.images.length > 0) {
+                    const gallery = document.createElement('div');
+                    gallery.className = 'image-gallery';
+                    log.images.forEach(imgUrl => {
+                        if (imgUrl) {
+                            const img = document.createElement('img');
+                            img.src = imgUrl;
+                            img.className = 'log-image';
+                            img.loading = 'lazy';
+                            img.onerror = () => img.style.display = 'none';
+                            gallery.appendChild(img);
+                        }
+                    });
+                    logItem.appendChild(gallery);
+                }
+
                 container.appendChild(logItem);
             });
         }
