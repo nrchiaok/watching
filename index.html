@@ -69,7 +69,7 @@
 
     <main id="log-container" class="space-y-4">
         <div id="loading-placeholder" class="space-y-10">
-            <div class="pt-10 border-t border-black/[0.06]">
+            <div class="pt-5 border-t border-black/[0.06]">
                 <div class="h-3 w-20 skeleton mb-2"></div>
                 <div class="h-4 w-full skeleton"></div>
             </div>
@@ -78,7 +78,7 @@
 
     <script>
         // デプロイしたウェブアプリのURLに書き換えてください
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbzHp-f0w6IYYv6xjtY6ZEybe34p9_Js5TLXLVuGGRjgOxNbwGSyJbvnZDnEm2kyQroP/exec';
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbxc-v1WhwjhYLGoH0q6kwrJXRfKReHAspS7z23bd47J3A1MXbvZyTxIez3nQmXlMfku/exec';
         let isTora = false;
 
         function toggleLogo() {
@@ -117,8 +117,8 @@
 
             logs.forEach((log, index) => {
                 const logItem = document.createElement('div');
-                // 区切り線とつぶやきの間隔：行間の約1.8倍（40px相当）
-                const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-10';
+                // 区切り線とつぶやきの間隔を半分（pt-10 から pt-5）に縮小
+                const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-5';
                 logItem.className = `flex flex-col ${borderClass}`;
 
                 // 日時（Arial / 11.2px / 青色 / 標準の太さ / 文頭整列）
