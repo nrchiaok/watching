@@ -64,8 +64,8 @@
         <button id="toggle-btn" class="win95-button" onclick="toggleLogo()">とらを表示</button>
     </header>
 
-    <main id="log-container" class="space-y-8">
-        <div id="loading-placeholder" class="space-y-6">
+    <main id="log-container" class="space-y-4"> <!-- 全体のログ同士の間隔をさらに詰め -->
+        <div id="loading-placeholder" class="space-y-4">
             <div class="pt-2 border-t border-black/[0.06]">
                 <div class="h-3 w-20 skeleton mb-2"></div>
                 <div class="h-4 w-full skeleton"></div>
@@ -74,7 +74,7 @@
     </main>
 
     <script>
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbxtq4Qy5ElrlaQH7vKMtU4u8rLhc9ee1etGwvi1kHvzf8Z18oMCO_usBr3F6YJh1Gtj/exec';
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbycakY2v4gb9JN4oehCosRm_MucFMt3hd_FW5ZMPx9Ypktzc4qQKcFilo2BLdOF4P6C/exec';
         let isTora = false;
 
         function toggleLogo() {
@@ -112,7 +112,7 @@
 
             logs.forEach((log, index) => {
                 const logItem = document.createElement('div');
-                // 区切り線と文字の間の余白を前回のさらに半分(pt-2)に調整
+                // 区切り線の上の余白を pt-2 に維持
                 const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-2';
                 logItem.className = `flex flex-col ${borderClass}`;
 
@@ -123,9 +123,9 @@
                 timeStr.style.lineHeight = '1';
                 timeStr.textContent = log.timestamp;
 
-                // 本文 (14px / 行間1.5)
+                // 本文 (14px / 行間1.5) - 下の余白を mb-4 から mb-2 に半分に縮小
                 const content = document.createElement('div');
-                content.className = 'text-[14px] leading-[1.5] whitespace-pre-wrap mb-4';
+                content.className = 'text-[14px] leading-[1.5] whitespace-pre-wrap mb-2';
                 content.innerHTML = linkify(log.content || "");
 
                 logItem.appendChild(timeStr);
@@ -134,18 +134,17 @@
                 // 写真表示
                 if (log.photos && log.photos.length > 0) {
                     const gallery = document.createElement('div');
-                    gallery.className = 'flex flex-wrap gap-[14px] w-full';
+                    // 写真がある場合も下の余白を最小限に (pb-2)
+                    gallery.className = 'flex flex-wrap gap-[14px] w-full pb-2';
                     
                     log.photos.forEach(url => {
                         const imgWrapper = document.createElement('div');
-                        // スマホ: 70%幅中央, PC: 25%幅グリッド
                         imgWrapper.className = 'w-[70%] mx-auto md:mx-0 md:w-[calc(25%-10.5px)]';
                         
                         const img = document.createElement('img');
                         img.src = url;
                         img.className = 'w-full h-[180px] object-cover bg-gray-50';
                         img.loading = 'lazy';
-                        // スマホ等で画像が読み込めない場合の予備
                         img.onerror = function() {
                             this.style.display = 'none';
                         };
