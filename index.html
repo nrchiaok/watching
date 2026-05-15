@@ -8,7 +8,7 @@
         /* 1. 基本フォント・ウェイト設定 */
         * {
             box-sizing: border-box;
-            font-weight: 400 !important; /* 太字を絶対に使用しない */
+            font-weight: 400 !important; 
             margin: 0;
             padding: 0;
         }
@@ -20,7 +20,7 @@
             line-height: 1.4;
         }
 
-        /* 2. ヘッダーとWin95風ボタン */
+        /* 2. とらボタン */
         header {
             margin-bottom: 30px;
             display: flex;
@@ -51,9 +51,9 @@
             border-bottom: 2px solid #ffffff;
         }
 
-        /* 3. ログエントリーのレイアウト */
+        /* 3. レイアウト */
         .log-entry {
-            margin-bottom: 14px; /* 区切り線との間隔 */
+            margin-bottom: 14px;
         }
         .timestamp {
             font-size: 11.2px;
@@ -70,11 +70,11 @@
             text-decoration: underline;
         }
 
-        /* 4. 画像レイアウト・レスポンシブ仕様 */
+        /* 4. 画像レイアウト・レスポンシブ設定 */
         .photo-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 14px; /* 写真同士の間隔 14px */
+            gap: 14px; 
             margin-top: 14px;
         }
         .photo-item {
@@ -84,7 +84,7 @@
             display: block;
             width: 100%;
             height: auto;
-            object-fit: contain; /* トリミングしない */
+            object-fit: contain; 
         }
 
         /* パターン1: 通常・正方形 (スマホ70%中央, PC25%横並び) */
@@ -93,24 +93,24 @@
                 width: 70%;
                 margin: 0 auto;
             }
-            /* パターン2: 超横長 */
+        
             .photo-item.wide {
                 width: 100%;
             }
-            /* パターン3: 超縦長 */
+       
             .photo-item.tall img {
                 max-height: 100vw;
             }
         }
         @media (min-width: 769px) {
             .photo-item.standard {
-                width: calc(25% - 10.5px); /* 4枚並び・隙間計算 */
+                width: calc(25% - 10.5px); 
             }
-            /* パターン2: 超横長 */
+          
             .photo-item.wide {
                 width: 100%;
             }
-            /* パターン3: 超縦長 */
+    
             .photo-item.tall {
                 width: auto;
             }
@@ -145,13 +145,10 @@
 </div>
 
 <script>
-    // --- 設定: ここにGASのURLを貼り付けてください ---
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwDy9yKQ2umS_bkDfYwa3eYForECbH-vlIl8tYLhzWwSycnubvqGjXa_Unerf4VOPl8/exec";
 
-    // ロゴとボタンテキストの切り替え機能
     function toggleLogo(btn) {
         const logo = document.getElementById('logo');
-        // getAttributeを使用することで「logo.tora.svg」の中の「logo.svg」に誤反応するのを防ぎます
         if (logo.getAttribute('src') === 'logo.svg') {
             logo.setAttribute('src', 'logo.tora.svg');
             btn.textContent = 'とらを非表示';
@@ -161,23 +158,21 @@
         }
     }
 
-    // URLをリンクに変換する機能 (Linkify)
     function linkify(text) {
         const urlPattern = /(https?:\/\/[^\s]+)/g;
         return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>');
     }
-
-    // 画像読み込み完了時にアスペクト比を判定してクラス付与
+    
     function handleImageLoad(img) {
         const ratio = img.naturalWidth / img.naturalHeight;
         const parent = img.parentElement;
 
         if (ratio > 2.0) {
-            parent.classList.add('wide'); // 超横長
+            parent.classList.add('wide'); 
         } else if (ratio < 0.5) {
-            parent.classList.add('tall'); // 超縦長
+            parent.classList.add('tall'); 
         } else {
-            parent.classList.add('standard'); // 通常・正方形
+            parent.classList.add('standard'); 
         }
     }
 
@@ -222,9 +217,7 @@
                         const img = document.createElement('img');
                         img.src = src;
                         img.alt = "";
-                        // 読み込みエラー時は親要素ごと削除
                         img.onerror = () => photoItem.remove();
-                        // 読み込み完了時にレイアウト判定
                         img.onload = () => handleImageLoad(img);
                         
                         photoItem.appendChild(img);
