@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
+            /* 厳密なフォント指定: 英数字=Arial, 日本語=游ゴシック, 太さ=標準固定 */
             font-family: Arial, "Yu Gothic Pr6N", "Yu Gothic", "Noto Sans JP", sans-serif;
             font-weight: 400;
             background-color: #ffffff;
@@ -38,7 +39,10 @@
             border-bottom: 2px solid #ffffff;
             padding: 3px 7px 1px 9px;
         }
-        .link { color: #0000ff; text-decoration: underline; }
+        .link {
+            color: #0000ff;
+            text-decoration: underline;
+        }
         .skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
             background-size: 200% 100%;
@@ -59,17 +63,19 @@
         <button id="toggle-btn" class="win95-button" onclick="toggleLogo()">とらを表示</button>
     </header>
 
+    <!-- 各ログ間の間隔を space-y-4 (改行1回分程度) に設定 -->
     <main id="log-container" class="space-y-4">
         <div id="loading-placeholder" class="space-y-4">
             <div class="pt-2 border-t border-black/[0.06]">
-                <div class="h-3 w-20 skeleton mb-2"></div>
+                <div class="h-3 w-20 skeleton mb-1"></div>
                 <div class="h-4 w-full skeleton"></div>
             </div>
         </div>
     </main>
 
     <script>
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbz1whIhtGWCuW5qvW9glOvCajWYzw33OKLO2dxvK22QMFbOun1VhM9M6YyH1uOPiD0y/exec';
+        // 最新のGASウェブアプリURLを指定
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbycakY2v4gb9JN4oehCosRm_MucFMt3hd_FW5ZMPx9Ypktzc4qQKcFilo2BLdOF4P6C/exec';
         let isTora = false;
 
         function toggleLogo() {
@@ -77,10 +83,16 @@
             const btn = document.getElementById('toggle-btn');
             isTora = !isTora;
             const timestamp = new Date().getTime();
-            logoImg.src = isTora ? `./logo.tora.svg?t=${timestamp}` : `./logo.svg?t=${timestamp}`;
-            btn.textContent = isTora ? 'とらを非表示' : 'とらを表示';
+            if (isTora) {
+                logoImg.src = `./logo.tora.svg?t=${timestamp}`;
+                btn.textContent = 'とらを非表示';
+            } else {
+                logoImg.src = `./logo.svg?t=${timestamp}`;
+                btn.textContent = 'とらを表示';
+            }
         }
 
+        // つぶやき内のURLを青いリンクに変換
         function linkify(text) {
             const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
             return text.replace(urlPattern, '<a href="$1" target="_blank" class="link">$1</a>');
@@ -92,7 +104,7 @@
                 const data = await response.json();
                 renderLogs(data);
             } catch (error) {
-                console.error('Error:', error);
+                console.error('Error fetching logs:', error);
             }
         }
 
@@ -102,15 +114,19 @@
 
             logs.forEach((log, index) => {
                 const logItem = document.createElement('div');
+                // 区切り線の上の余白は最小限 (pt-2)
                 const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] pt-2';
                 logItem.className = `flex flex-col ${borderClass}`;
 
+                // 日時 (Arial / 11.2px / 青色 / 余白はmb-1)
                 const timeStr = document.createElement('span');
                 timeStr.className = 'text-[#0000ff] mb-1';
                 timeStr.style.fontSize = '11.2px';
                 timeStr.style.lineHeight = '1';
                 timeStr.textContent = log.timestamp;
 
+                // 本文 (14px / 行間1.5)
+                // ※ 下の余白を完全になくし、次の区切り線との距離を改行程度に詰める
                 const content = document.createElement('div');
                 content.className = 'text-[14px] leading-[1.5] whitespace-pre-wrap';
                 content.innerHTML = linkify(log.content || "");
@@ -118,8 +134,10 @@
                 logItem.appendChild(timeStr);
                 logItem.appendChild(content);
 
+                // 写真ギャラリーの表示
                 if (log.photos && log.photos.length > 0) {
                     const gallery = document.createElement('div');
+                    // 写真がある場合のみ、本文と写真の間に極小の隙間(mt-2)を空ける
                     gallery.className = 'flex flex-wrap gap-[14px] w-full mt-2';
                     
                     log.photos.forEach(url => {
@@ -128,14 +146,19 @@
                         
                         const img = document.createElement('img');
                         img.src = url;
+                        // 画像の重みを均一にするスタイル
                         img.className = 'w-full h-[180px] object-cover bg-gray-50';
-                        img.onerror = function() { this.style.display = 'none'; };
+                        // 画像がどうしても読み込めない場合は非表示にする
+                        img.onerror = function() {
+                            this.style.display = 'none';
+                        };
                         
                         imgWrapper.appendChild(img);
                         gallery.appendChild(imgWrapper);
                     });
                     logItem.appendChild(gallery);
                 }
+
                 container.appendChild(logItem);
             });
         }
