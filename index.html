@@ -4,188 +4,247 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>nrchi watching</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* 1. 基本フォント・ウェイト設定 */
+        * {
+            box-sizing: border-box;
+            font-weight: 400 !important; /* 太字を絶対に使用しない */
+            margin: 0;
+            padding: 0;
+        }
         body {
-            font-family: Arial, "Yu Gothic Pr6N", "Yu Gothic", "Noto Sans JP", sans-serif;
+            font-family: Arial, "Yu Gothic Pr6N", "Yu Gothic", sans-serif;
             background-color: #ffffff;
             color: #000000;
-            -webkit-font-smoothing: antialiased;
+            padding: 20px;
+            line-height: 1.4;
         }
-        /* 【要件厳守】文字の太さはすべて標準、太字は一切使用しない */
-        * {
-            font-weight: 400 !important;
+
+        /* 2. ヘッダーとWin95風ボタン */
+        header {
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
-        .win95-button {
+        #logo {
+            height: 40px;
+            display: block;
+        }
+        .win95-btn {
             background: #c0c0c0;
             border-top: 2px solid #ffffff;
             border-left: 2px solid #ffffff;
             border-right: 2px solid #808080;
             border-bottom: 2px solid #808080;
-            padding: 2px 8px;
-            font-size: 11px;
-            color: #000000;
+            padding: 4px 10px;
             cursor: pointer;
-            outline: 1px solid #000000;
-            margin-left: 12px;
-            height: 22px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            white-space: nowrap;
+            font-family: Arial;
+            font-size: 12px;
+            outline: none;
+            user-select: none;
         }
-        .win95-button:active {
+        .win95-btn:active {
             border-top: 2px solid #808080;
             border-left: 2px solid #808080;
             border-right: 2px solid #ffffff;
             border-bottom: 2px solid #ffffff;
-            padding: 3px 7px 1px 9px;
         }
-        .link {
+
+        /* 3. ログエントリーのレイアウト */
+        .log-entry {
+            margin-bottom: 14px; /* 区切り線との間隔 */
+        }
+        .timestamp {
+            font-size: 11.2px;
+            color: #0000ff;
+            margin-bottom: 4px;
+        }
+        .content {
+            font-size: 14px;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        .content a {
             color: #0000ff;
             text-decoration: underline;
         }
-        .skeleton {
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
+
+        /* 4. 画像レイアウト・レスポンシブ仕様 */
+        .photo-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px; /* 写真同士の間隔 14px */
+            margin-top: 14px;
         }
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
+        .photo-item {
+            display: block;
         }
-        /* 画像読み込みエラー時の隙間防止用クラス */
-        .img-error {
-            display: none !important;
+        .photo-item img {
+            display: block;
+            width: 100%;
+            height: auto;
+            object-fit: contain; /* トリミングしない */
+        }
+
+        /* パターン1: 通常・正方形 (スマホ70%中央, PC25%横並び) */
+        @media (max-width: 768px) {
+            .photo-item.standard {
+                width: 70%;
+                margin: 0 auto;
+            }
+            /* パターン2: 超横長 */
+            .photo-item.wide {
+                width: 100%;
+            }
+            /* パターン3: 超縦長 */
+            .photo-item.tall img {
+                max-height: 100vw;
+            }
+        }
+        @media (min-width: 769px) {
+            .photo-item.standard {
+                width: calc(25% - 10.5px); /* 4枚並び・隙間計算 */
+            }
+            /* パターン2: 超横長 */
+            .photo-item.wide {
+                width: 100%;
+            }
+            /* パターン3: 超縦長 */
+            .photo-item.tall {
+                width: auto;
+            }
+            .photo-item.tall img {
+                max-height: 100vw;
+                width: auto;
+            }
+        }
+
+        /* 区切り線 */
+        .separator {
+            border: none;
+            border-top: 1px solid #cccccc;
+            margin-bottom: 14px;
+        }
+
+        #loading {
+            font-size: 14px;
+            color: #888;
         }
     </style>
 </head>
-<body class="p-6 md:p-12 max-w-3xl mx-auto">
-    <header class="mb-8 flex items-center">
-        <div id="logo-container" class="flex-shrink-0">
-            <img id="main-logo" src="./logo.svg" alt="watching" class="h-[26px] md:h-[38px] w-auto">
-        </div>
-        <button id="toggle-btn" class="win95-button" onclick="toggleLogo()">とらを表示</button>
-    </header>
-    
-    <main id="log-container" class="flex flex-col">
-        <div id="loading-placeholder">
-            <div class="pt-[14px] border-t border-black/[0.06]">
-                <div class="h-3 w-20 skeleton mb-1"></div>
-                <div class="h-4 w-full skeleton"></div>
-            </div>
-        </div>
-    </main>
-    
-    <script>
-        // ↓↓↓ ご自身の公開されたGASのWebアプリURLをそのまま使用してください ↓↓↓
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbycakY2v4gb9JN4oehCosRm_MucFMt3hd_FW5ZMPx9Ypktzc4qQKcFilo2BLdOF4P6C/exec';
-        let isTora = false;
-        
-        function toggleLogo() {
-            const logoImg = document.getElementById('main-logo');
-            const btn = document.getElementById('toggle-btn');
-            isTora = !isTora;
-            const timestamp = new Date().getTime();
-            if (isTora) {
-                logoImg.src = `./logo.tora.svg?t=${timestamp}`;
-                btn.textContent = 'とらを非表示';
-            } else {
-                logoImg.src = `./logo.svg?t=${timestamp}`;
-                btn.textContent = 'とらを表示';
-            }
+<body>
+
+<header>
+    <img src="logo.svg" id="logo" alt="logo">
+    <button class="win95-btn" onclick="toggleLogo()">Change Logo</button>
+</header>
+
+<div id="log-container">
+    <p id="loading">Loading logs...</p>
+</div>
+
+<script>
+    // --- 設定: ここにGASのURLを貼り付けてください ---
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwDy9yKQ2umS_bkDfYwa3eYForECbH-vlIl8tYLhzWwSycnubvqGjXa_Unerf4VOPl8/exec";
+
+    // ロゴ切り替え機能
+    function toggleLogo() {
+        const logo = document.getElementById('logo');
+        if (logo.src.includes('logo.svg')) {
+            logo.src = 'logo.tora.svg';
+        } else {
+            logo.src = 'logo.svg';
         }
-        
-        function linkify(text) {
-            const urlPattern = /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
-            return text.replace(urlPattern, '<a href="$1" target="_blank" class="link">$1</a>');
+    }
+
+    // URLをリンクに変換する機能 (Linkify)
+    function linkify(text) {
+        const urlPattern = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>');
+    }
+
+    // 画像読み込み完了時にアスペクト比を判定してクラス付与
+    function handleImageLoad(img) {
+        const ratio = img.naturalWidth / img.naturalHeight;
+        const parent = img.parentElement;
+
+        if (ratio > 2.0) {
+            parent.classList.add('wide'); // 超横長
+        } else if (ratio < 0.5) {
+            parent.classList.add('tall'); // 超縦長
+        } else {
+            parent.classList.add('standard'); // 通常・正方形
         }
-        
-        async function fetchLogs() {
-            try {
-                const response = await fetch(gasUrl);
-                const data = await response.json();
-                renderLogs(data);
-            } catch (error) {
-                console.error('Error fetching logs:', error);
-                document.getElementById('loading-placeholder').innerHTML = '<p class="text-[14px]">読み込みに失敗しました。</p>';
-            }
-        }
-        
-        function renderLogs(logs) {
+    }
+
+    // データ取得と表示
+    async function fetchLogs() {
+        try {
+            const response = await fetch(GAS_API_URL);
+            const data = await response.json();
             const container = document.getElementById('log-container');
             container.innerHTML = '';
-            
-            logs.forEach((log, index) => {
-                const logItem = document.createElement('div');
-                
-                const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] mt-[14px] pt-[14px]';
-                logItem.className = `flex flex-col ${borderClass}`;
-                
-                const timeStr = document.createElement('span');
-                timeStr.className = 'text-[#0000ff] mb-1';
-                timeStr.style.fontSize = '11.2px';
-                timeStr.style.lineHeight = '1';
-                timeStr.textContent = log.timestamp;
-                
+
+            if (data.length === 0) {
+                container.innerHTML = '<p>No logs found.</p>';
+                return;
+            }
+
+            data.forEach(log => {
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+
+                // 日付
+                const ts = document.createElement('div');
+                ts.className = 'timestamp';
+                ts.textContent = log.timestamp;
+                entry.appendChild(ts);
+
+                // 本文
                 const content = document.createElement('div');
-                content.className = 'text-[14px] leading-[1.5] whitespace-pre-wrap';
-                content.innerHTML = linkify(log.content || "");
-                
-                logItem.appendChild(timeStr);
-                logItem.appendChild(content);
-                
+                content.className = 'content';
+                content.innerHTML = linkify(log.content);
+                entry.appendChild(content);
+
+                // 写真
                 if (log.photos && log.photos.length > 0) {
-                    const gallery = document.createElement('div');
-                    // items-start を追加し、高さが異なる画像が並んだ際に縦に間延びするのを防ぐ
-                    gallery.className = 'flex flex-wrap items-start gap-[14px] w-full mt-[14px]';
+                    const photoContainer = document.createElement('div');
+                    photoContainer.className = 'photo-container';
                     
-                    log.photos.forEach(url => {
-                        const imgWrapper = document.createElement('div');
-                        // 読み込み完了前のデフォルトのラッパー幅
-                        imgWrapper.className = 'w-[70%] mx-auto md:mx-0 md:w-[calc(25%-10.5px)]';
+                    log.photos.forEach(src => {
+                        const photoItem = document.createElement('div');
+                        photoItem.className = 'photo-item';
                         
                         const img = document.createElement('img');
-                        // トリミング（object-cover / 固定高）を廃止し、縦横比を維持
-                        img.className = 'w-full h-auto bg-gray-50';
+                        img.src = src;
+                        img.alt = "";
+                        // 読み込みエラー時は親要素ごと削除
+                        img.onerror = () => photoItem.remove();
+                        // 読み込み完了時にレイアウト判定
+                        img.onload = () => handleImageLoad(img);
                         
-                        // キャッシュ対策として src 代入前に onload を定義
-                        img.onload = function() {
-                            const ratio = this.naturalWidth / this.naturalHeight;
-                            
-                            if (ratio >= 2.0) {
-                                // 【超横長】 横幅を全体の幅に収まる最大サイズにする（100%幅）
-                                imgWrapper.className = 'w-full';
-                            } 
-                            else if (ratio <= 0.5) {
-                                // 【超縦長】 全体の横幅（PC最大768px、スマホ100vw）を画像の縦幅の最大とする
-                                imgWrapper.className = 'w-full flex justify-center md:justify-start md:w-auto';
-                                // w-full を外し、最大の高さを制限
-                                this.className = 'w-auto h-auto max-h-[100vw] md:max-h-[48rem] bg-gray-50';
-                            } 
-                            else {
-                                // 【正方形・通常】 従来のグリッド幅。高さは自動になるため、正方形は「今のグリッドの高さ」になります
-                                imgWrapper.className = 'w-[70%] mx-auto md:mx-0 md:w-[calc(25%-10.5px)]';
-                            }
-                        };
-                        
-                        img.onerror = function() { 
-                            this.parentElement.classList.add('img-error'); 
-                        };
-                        
-                        // イベント定義後にURLをセットして読み込み開始
-                        img.src = url;
-                        
-                        imgWrapper.appendChild(img);
-                        gallery.appendChild(imgWrapper);
+                        photoItem.appendChild(img);
+                        photoContainer.appendChild(photoItem);
                     });
-                    logItem.appendChild(gallery);
+                    entry.appendChild(photoContainer);
                 }
-                container.appendChild(logItem);
+
+                container.appendChild(entry);
+
+                // 区切り線
+                const hr = document.createElement('hr');
+                hr.className = 'separator';
+                container.appendChild(hr);
             });
+        } catch (error) {
+            console.error("Error fetching logs:", error);
+            document.getElementById('loading').textContent = "Failed to load logs.";
         }
-        
-        window.onload = fetchLogs;
-    </script>
+    }
+
+    fetchLogs();
+</script>
+
 </body>
 </html>
