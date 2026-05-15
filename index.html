@@ -68,7 +68,6 @@
         <button id="toggle-btn" class="win95-button" onclick="toggleLogo()">とらを表示</button>
     </header>
     
-    <!-- space-y クラスを外し、JS内でマージンを厳密に制御する -->
     <main id="log-container" class="flex flex-col">
         <div id="loading-placeholder">
             <div class="pt-[14px] border-t border-black/[0.06]">
@@ -80,7 +79,7 @@
     
     <script>
         // ↓↓↓ ご自身の公開されたGASのWebアプリURLをそのまま使用してください ↓↓↓
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbzi0U2RA_iXQa6l-jzDIOBX05H53I6KdepVG9HAuL3gXePM3-EH--Iog2h1Y-6EUd8/exec';
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbycakY2v4gb9JN4oehCosRm_MucFMt3hd_FW5ZMPx9Ypktzc4qQKcFilo2BLdOF4P6C/exec';
         let isTora = false;
         
         function toggleLogo() {
@@ -120,7 +119,6 @@
             logs.forEach((log, index) => {
                 const logItem = document.createElement('div');
                 
-                // 【要件厳守】区切り線の間隔は「改行1つ分（14px）」に極限まで詰める
                 const borderClass = index === 0 ? '' : 'border-t border-black/[0.06] mt-[14px] pt-[14px]';
                 logItem.className = `flex flex-col ${borderClass}`;
                 
@@ -139,23 +137,44 @@
                 
                 if (log.photos && log.photos.length > 0) {
                     const gallery = document.createElement('div');
-                    // 【要件厳守】写真同士の間隔は14px
-                    gallery.className = 'flex flex-wrap gap-[14px] w-full mt-[14px]';
+                    // items-start を追加し、高さが異なる画像が並んだ際に縦に間延びするのを防ぐ
+                    gallery.className = 'flex flex-wrap items-start gap-[14px] w-full mt-[14px]';
                     
                     log.photos.forEach(url => {
                         const imgWrapper = document.createElement('div');
-                        // 【要件厳守】スマホ: 横幅70%中央揃え / PC: 横幅25%（隙間計算含む）最大4枚
+                        // 読み込み完了前のデフォルトのラッパー幅
                         imgWrapper.className = 'w-[70%] mx-auto md:mx-0 md:w-[calc(25%-10.5px)]';
                         
                         const img = document.createElement('img');
-                        img.src = url;
-                        // 【要件厳守】アスペクト比維持で高さ180pxにトリミング
-                        img.className = 'w-full h-[180px] object-cover bg-gray-50';
+                        // トリミング（object-cover / 固定高）を廃止し、縦横比を維持
+                        img.className = 'w-full h-auto bg-gray-50';
                         
-                        // 【修正】画像エラー時は、imgタグだけでなく親のラッパーごと消して隙間を作らない
+                        // キャッシュ対策として src 代入前に onload を定義
+                        img.onload = function() {
+                            const ratio = this.naturalWidth / this.naturalHeight;
+                            
+                            if (ratio >= 2.0) {
+                                // 【超横長】 横幅を全体の幅に収まる最大サイズにする（100%幅）
+                                imgWrapper.className = 'w-full';
+                            } 
+                            else if (ratio <= 0.5) {
+                                // 【超縦長】 全体の横幅（PC最大768px、スマホ100vw）を画像の縦幅の最大とする
+                                imgWrapper.className = 'w-full flex justify-center md:justify-start md:w-auto';
+                                // w-full を外し、最大の高さを制限
+                                this.className = 'w-auto h-auto max-h-[100vw] md:max-h-[48rem] bg-gray-50';
+                            } 
+                            else {
+                                // 【正方形・通常】 従来のグリッド幅。高さは自動になるため、正方形は「今のグリッドの高さ」になります
+                                imgWrapper.className = 'w-[70%] mx-auto md:mx-0 md:w-[calc(25%-10.5px)]';
+                            }
+                        };
+                        
                         img.onerror = function() { 
                             this.parentElement.classList.add('img-error'); 
                         };
+                        
+                        // イベント定義後にURLをセットして読み込み開始
+                        img.src = url;
                         
                         imgWrapper.appendChild(img);
                         gallery.appendChild(imgWrapper);
