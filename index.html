@@ -137,7 +137,7 @@
 
 <header>
     <img src="logo.svg" id="logo" alt="logo">
-    <button class="win95-btn" onclick="toggleLogo()">Change Logo</button>
+    <button class="win95-btn" onclick="toggleLogo(this)">とらを表示</button>
 </header>
 
 <div id="log-container">
@@ -146,15 +146,18 @@
 
 <script>
     // --- 設定: ここにGASのURLを貼り付けてください ---
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwDy9yKQ2umS_bkDfYwa3eYForECbH-vlIl8tYLhzWwSycnubvqGjXa_Unerf4VOPl8/exec";
+    const GAS_API_URL = "YOUR_GAS_WEB_APP_URL_HERE";
 
-    // ロゴ切り替え機能
-    function toggleLogo() {
+    // ロゴとボタンテキストの切り替え機能
+    function toggleLogo(btn) {
         const logo = document.getElementById('logo');
-        if (logo.src.includes('logo.svg')) {
-            logo.src = 'logo.tora.svg';
+        // getAttributeを使用することで「logo.tora.svg」の中の「logo.svg」に誤反応するのを防ぎます
+        if (logo.getAttribute('src') === 'logo.svg') {
+            logo.setAttribute('src', 'logo.tora.svg');
+            btn.textContent = 'とらを非表示';
         } else {
-            logo.src = 'logo.svg';
+            logo.setAttribute('src', 'logo.svg');
+            btn.textContent = 'とらを表示';
         }
     }
 
