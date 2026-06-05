@@ -93,11 +93,9 @@
                 width: 70%;
                 margin: 0 auto;
             }
-        
             .photo-item.wide {
                 width: 100%;
             }
-       
             .photo-item.tall img {
                 max-height: 100vw;
             }
@@ -106,11 +104,9 @@
             .photo-item.standard {
                 width: calc(25% - 10.5px); 
             }
-          
             .photo-item.wide {
                 width: 100%;
             }
-    
             .photo-item.tall {
                 width: auto;
             }
@@ -131,6 +127,22 @@
             font-size: 14px;
             color: #888;
         }
+
+        /* 5. さらに読み込むボタン */
+        #load-more-container {
+            text-align: right; /* 右寄せ */
+            margin-top: 20px;
+            margin-bottom: 40px;
+            display: none; /* 初期は非表示 */
+        }
+        #load-more-btn {
+            color: #0000ff; /* 日時と同じ青色 */
+            font-size: 14px; /* 文章と同じサイズ */
+            cursor: pointer;
+        }
+        #load-more-btn:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -140,12 +152,19 @@
     <button class="win95-btn" onclick="toggleLogo(this)">とらを表示</button>
 </header>
 
-<div id="log-container">
-    <p id="loading">Loading logs...</p>
+<div id="log-container"></div>
+<p id="loading">Loading logs...</p>
+
+<div id="load-more-container">
+    <span id="load-more-btn" onclick="fetchLogs()">さらに読み込む</span>
 </div>
 
 <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwDy9yKQ2umS_bkDfYwa3eYForECbH-vlIl8tYLhzWwSycnubvqGjXa_Unerf4VOPl8/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxlpVyCWCCybIQfmA1YVwgbd7FlHi4Lr7uvdq41C8aLMXpS8pxtuFMMr6kU9kY_0KSd/exec";
+
+    // 通信制御用の変数
+    let currentPage = 1;
+    let isFetching = false;
 
     function toggleLogo(btn) {
         const logo = document.getElementById('logo');
@@ -176,20 +195,39 @@
         }
     }
 
-    // データ取得と表示
+    // データ取得と表示（サーバーサイドページネーション）
     async function fetchLogs() {
-        try {
-            const response = await fetch(GAS_API_URL);
-            const data = await response.json();
-            const container = document.getElementById('log-container');
-            container.innerHTML = '';
+        if (isFetching) return; // 連続クリック防止
+        isFetching = true;
 
-            if (data.length === 0) {
+        const loading = document.getElementById('loading');
+        const loadMoreContainer = document.getElementById('load-more-container');
+        const loadMoreBtn = document.getElementById('load-more-btn');
+
+        if (currentPage === 1) {
+            loading.style.display = 'block';
+        } else {
+            loadMoreBtn.textContent = '読み込み中...';
+        }
+        loadMoreContainer.style.display = 'none';
+
+        try {
+            // URLに何ページ目かをパラメータとして付与してGASと通信
+            const targetUrl = `${GAS_API_URL}?page=${currentPage}`;
+            const response = await fetch(targetUrl);
+            const data = await response.json();
+            
+            loading.style.display = 'none';
+            const container = document.getElementById('log-container');
+
+            if (currentPage === 1 && (!data.logs || data.logs.length === 0)) {
                 container.innerHTML = '<p>No logs found.</p>';
+                isFetching = false;
                 return;
             }
 
-            data.forEach(log => {
+            // 取得したデータ（最大15件）を追加
+            data.logs.forEach(log => {
                 const entry = document.createElement('div');
                 entry.className = 'log-entry';
 
@@ -233,12 +271,24 @@
                 hr.className = 'separator';
                 container.appendChild(hr);
             });
+
+            // hasNext: trueの場合ボタンを表示
+            if (data.hasNext) {
+                loadMoreContainer.style.display = 'block';
+                loadMoreBtn.textContent = 'さらに読み込む';
+                currentPage++; // 次の通信に備えてページ番号を増やす
+            }
+
         } catch (error) {
             console.error("Error fetching logs:", error);
-            document.getElementById('loading').textContent = "Failed to load logs.";
+            loading.style.display = 'block';
+            loading.textContent = "Failed to load logs.";
+        } finally {
+            isFetching = false;
         }
     }
 
+    // 初回読み込み
     fetchLogs();
 </script>
 
