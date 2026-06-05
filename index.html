@@ -272,11 +272,11 @@
                 container.appendChild(hr);
             });
 
-            // GASから「まだ続きのデータがある(hasNext: true)」と返ってきた場合のみボタンを表示
+            // hasNext: trueの場合のみボタンを表示
             if (data.hasNext) {
                 loadMoreContainer.style.display = 'block';
                 loadMoreBtn.textContent = 'さらに読み込む';
-                currentPage++; // 次の通信に備えてページ番号を増やす
+                currentPage++; // ページ番号を増やす
             }
 
         } catch (error) {
