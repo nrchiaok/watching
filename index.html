@@ -130,14 +130,14 @@
 
         /* 5. さらに読み込むボタン */
         #load-more-container {
-            text-align: right; /* 右寄せ */
+            text-align: left; /* 【変更】左揃えに変更 */
             margin-top: 20px;
             margin-bottom: 40px;
             display: none; /* 初期は非表示 */
         }
         #load-more-btn {
-            color: #0000ff; /* 日時と同じ青色 */
-            font-size: 14px; /* 文章と同じサイズ */
+            color: #0000ff;
+            font-size: 14px;
             cursor: pointer;
         }
         #load-more-btn:hover {
@@ -160,7 +160,7 @@
 </div>
 
 <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxlpVyCWCCybIQfmA1YVwgbd7FlHi4Lr7uvdq41C8aLMXpS8pxtuFMMr6kU9kY_0KSd/exec";
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwDy9yKQ2umS_bkDfYwa3eYForECbH-vlIl8tYLhzWwSycnubvqGjXa_Unerf4VOPl8/exec";
 
     // 通信制御用の変数
     let currentPage = 1;
@@ -226,7 +226,7 @@
                 return;
             }
 
-            // 取得したデータ（最大15件）を追加
+            // 取得したデータ（最大30件）を画面に継ぎ足す
             data.logs.forEach(log => {
                 const entry = document.createElement('div');
                 entry.className = 'log-entry';
@@ -272,7 +272,7 @@
                 container.appendChild(hr);
             });
 
-            // hasNext: trueの場合ボタンを表示
+            // GASから「まだ続きのデータがある(hasNext: true)」と返ってきた場合のみボタンを表示
             if (data.hasNext) {
                 loadMoreContainer.style.display = 'block';
                 loadMoreBtn.textContent = 'さらに読み込む';
