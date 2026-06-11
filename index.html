@@ -137,10 +137,10 @@
 
         /* 5. さらに読み込むボタン */
         #load-more-container {
-            text-align: left; /* 【変更】左揃えに変更 */
+            text-align: left; 
             margin-top: 20px;
             margin-bottom: 40px;
-            display: none; /* 初期は非表示 */
+            display: none; 
         }
         #load-more-btn {
             color: #0000ff;
@@ -169,7 +169,7 @@
 <script>
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxHXpuN76e5Ha81V_6f7kCZlMfFM2pq_wIPtnG77DkNhVPbqGLJxosfmdiQX5FjkJ2t/exec";
 
-    // 通信制御用の変数
+    // 通信制御
     let currentPage = 1;
     let isFetching = false;
 
@@ -204,7 +204,7 @@
 
     // データ取得と表示（サーバーサイドページネーション）
     async function fetchLogs() {
-        if (isFetching) return; // 連続クリック防止
+        if (isFetching) return; 
         isFetching = true;
 
         const loading = document.getElementById('loading');
@@ -219,7 +219,7 @@
         loadMoreContainer.style.display = 'none';
 
         try {
-            // URLに何ページ目かをパラメータとして付与してGASと通信
+            // URLパラメータへページ数付与・GASへ連携
             const targetUrl = `${GAS_API_URL}?page=${currentPage}`;
             const response = await fetch(targetUrl);
             const data = await response.json();
@@ -233,7 +233,7 @@
                 return;
             }
 
-            // 取得したデータ（最大30件）を画面に継ぎ足す
+            // 取得データ（最大30件）を追加
             data.logs.forEach(log => {
                 const entry = document.createElement('div');
                 entry.className = 'log-entry';
@@ -283,7 +283,7 @@
             if (data.hasNext) {
                 loadMoreContainer.style.display = 'block';
                 loadMoreBtn.textContent = 'さらに読み込む';
-                currentPage++; // ページ番号を増やす
+                currentPage++;
             }
 
         } catch (error) {
