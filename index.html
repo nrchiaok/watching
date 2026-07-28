@@ -182,3 +182,156 @@
             logo.setAttribute('src', 'logo.tora.svg');
             btn.textContent = 'とらを非表示';
         } else {
+            logo.setAttribute('src', 'logo.svg');
+            btn.textContent = 'とらを表示';
+        }
+    }
+
+    function linkify(text) {
+        const urlPattern = /(https?:\/\/[^\s]+)/g;
+        return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>');
+    }
+    
+    function handleImageLoad(img) {
+        const ratio = img.naturalWidth / img.naturalHeight;
+        const parent = img.parentElement;
+
+        if (ratio > 2.0) {
+            parent.classList.add('wide'); 
+        } else if (ratio < 0.5) {
+            parent.classList.add('tall'); 
+        } else {
+            parent.classList.add('standard'); 
+        }
+    }
+
+    // 1件分のログをDOMに描画し、その要素を返す
+    function renderLog(log, container) {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+
+        const ts = document.createElement('div');
+        ts.className = 'timestamp';
+        ts.textContent = log.timestamp;
+        entry.appendChild(ts);
+
+        const content = document.createElement('div');
+        content.className = 'content';
+        content.innerHTML = linkify(log.content);
+        entry.appendChild(content);
+
+        if (log.photos && log.photos.length > 0) {
+            const photoContainer = document.createElement('div');
+            photoContainer.className = 'photo-container';
+            
+            log.photos.forEach(src => {
+                const photoItem = document.createElement('div');
+                photoItem.className = 'photo-item';
+                
+                const img = document.createElement('img');
+                img.src = src;
+                img.alt = "";
+                img.onerror = () => photoItem.remove();
+                img.onload = () => handleImageLoad(img);
+                
+                photoItem.appendChild(img);
+                photoContainer.appendChild(photoItem);
+            });
+            entry.appendChild(photoContainer);
+        }
+
+        container.appendChild(entry);
+
+        const hr = document.createElement('hr');
+        hr.className = 'separator';
+        container.appendChild(hr);
+
+        return entry; // スクロール先として使う
+    }
+
+    // カウントアップ開始
+    function startCounter(btn) {
+        let sec = 0;
+        btn.textContent = '読み込み中... 0秒';
+        counterTimer = setInterval(() => {
+            sec++;
+            btn.textContent = `読み込み中... ${sec}秒`;
+        }, 1000);
+    }
+    function stopCounter() {
+        clearInterval(counterTimer);
+        counterTimer = null;
+    }
+
+    // 次の30件を表示
+    function renderNextPage() {
+        if (isRendering) return; // 連打防止
+        if (renderedCount >= allLogs.length) return;
+
+        isRendering = true;
+        const container = document.getElementById('log-container');
+        const loadMoreContainer = document.getElementById('load-more-container');
+        const loadMoreBtn = document.getElementById('load-more-btn');
+
+        // ボタンをカウントアップ表示に変える
+        startCounter(loadMoreBtn);
+
+        // 体感のための「間」を作ってから描画（0.4秒）
+        setTimeout(() => {
+            const next = allLogs.slice(renderedCount, renderedCount + PER_PAGE);
+            let firstNewEntry = null;
+
+            next.forEach((log, idx) => {
+                const entry = renderLog(log, container);
+                if (idx === 0) firstNewEntry = entry; // 追加分の先頭
+            });
+            renderedCount += next.length;
+
+            stopCounter();
+
+            // 新しく追加された先頭へスルスルとスクロール移動
+            if (firstNewEntry) {
+                firstNewEntry.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // まだ残りがあればボタンを戻す、なければ消す
+            if (renderedCount < allLogs.length) {
+                loadMoreBtn.textContent = 'さらに読み込む';
+                loadMoreContainer.style.display = 'block';
+            } else {
+                loadMoreContainer.style.display = 'none';
+            }
+
+            isRendering = false;
+        }, 400);
+    }
+
+    // 初回：logs.json を取得
+    async function init() {
+        const loading = document.getElementById('loading');
+        try {
+            const response = await fetch(`${JSON_URL}?t=${Date.now()}`);
+            const data = await response.json();
+
+            loading.style.display = 'none';
+
+            allLogs = data.logs || [];
+
+            if (allLogs.length === 0) {
+                document.getElementById('log-container').innerHTML = '<p>No logs found.</p>';
+                return;
+            }
+
+            renderNextPage();
+
+        } catch (error) {
+            console.error("Error fetching logs:", error);
+            loading.innerHTML = '読み込みに失敗しました。<span style="color:#0000ff;cursor:pointer;margin-left:8px;" onclick="location.reload()">再試行</span>';
+        }
+    }
+
+    init();
+</script>
+
+</body>
+</html>
