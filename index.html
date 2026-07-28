@@ -164,7 +164,7 @@
 <p id="loading">Loading logs...</p>
 
 <div id="load-more-container">
-    <span id="load-more-btn" onclick="renderNextPage()">さらに読み込む</span>
+    <span id="load-more-btn" onclick="renderNextPage(true)">さらに読み込む</span>
 </div>
 
 <script>
@@ -172,7 +172,7 @@
     const PER_PAGE = 30; // 1回に表示する件数
 
     let allLogs = [];      // 全データを保持
-    let renderedCount = 0; // すでに表示した件数
+    let renderedCount = 0; // 表示した件数
     let isRendering = false; // 二重実行防止
     let counterTimer = null; // カウントアップ用
 
@@ -205,7 +205,7 @@
         }
     }
 
-    // 1件分のログをDOMに描画し、その要素を返す
+    // 1件分のログをDOMに描画→要素を返す
     function renderLog(log, container) {
         const entry = document.createElement('div');
         entry.className = 'log-entry';
@@ -246,7 +246,7 @@
         hr.className = 'separator';
         container.appendChild(hr);
 
-        return entry; // スクロール先として使う
+        return entry; 
     }
 
     // カウントアップ開始
@@ -263,8 +263,8 @@
         counterTimer = null;
     }
 
-    // 次の30件を表示
-    function renderNextPage() {
+    // 次の30件を表示（doScroll: 追加分の先頭へスクロール）
+    function renderNextPage(doScroll) {
         if (isRendering) return; // 連打防止
         if (renderedCount >= allLogs.length) return;
 
@@ -273,10 +273,7 @@
         const loadMoreContainer = document.getElementById('load-more-container');
         const loadMoreBtn = document.getElementById('load-more-btn');
 
-        // ボタンをカウントアップ表示に変える
         startCounter(loadMoreBtn);
-
-        // 体感のための「間」を作ってから描画（0.4秒）
         setTimeout(() => {
             const next = allLogs.slice(renderedCount, renderedCount + PER_PAGE);
             let firstNewEntry = null;
@@ -289,12 +286,12 @@
 
             stopCounter();
 
-            // 新しく追加された先頭へスルスルとスクロール移動
-            if (firstNewEntry) {
+            // さらに読み込む場合：追加分の先頭へ移動
+            if (doScroll && firstNewEntry) {
                 firstNewEntry.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
 
-            // まだ残りがあればボタンを戻す、なければ消す
+            // 残りあればボタン表示
             if (renderedCount < allLogs.length) {
                 loadMoreBtn.textContent = 'さらに読み込む';
                 loadMoreContainer.style.display = 'block';
@@ -322,7 +319,7 @@
                 return;
             }
 
-            renderNextPage();
+            renderNextPage(false); // 初回はスクロールしない
 
         } catch (error) {
             console.error("Error fetching logs:", error);
