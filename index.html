@@ -61,6 +61,7 @@
         /* 3. レイアウト */
         .log-entry {
             margin-bottom: 14px;
+            scroll-margin-top: 20px; /* スクロール移動時の上余白 */
         }
         .timestamp {
             font-size: 11.2px;
@@ -167,12 +168,13 @@
 </div>
 
 <script>
-    // logs.json を読む（同じリポジトリ内）。キャッシュ回避に日時パラメータを付与
     const JSON_URL = "logs.json";
     const PER_PAGE = 30; // 1回に表示する件数
 
     let allLogs = [];      // 全データを保持
     let renderedCount = 0; // すでに表示した件数
+    let isRendering = false; // 二重実行防止
+    let counterTimer = null; // カウントアップ用
 
     function toggleLogo(btn) {
         const logo = document.getElementById('logo');
@@ -180,115 +182,3 @@
             logo.setAttribute('src', 'logo.tora.svg');
             btn.textContent = 'とらを非表示';
         } else {
-            logo.setAttribute('src', 'logo.svg');
-            btn.textContent = 'とらを表示';
-        }
-    }
-
-    function linkify(text) {
-        const urlPattern = /(https?:\/\/[^\s]+)/g;
-        return text.replace(urlPattern, '<a href="$1" target="_blank">$1</a>');
-    }
-    
-    function handleImageLoad(img) {
-        const ratio = img.naturalWidth / img.naturalHeight;
-        const parent = img.parentElement;
-
-        if (ratio > 2.0) {
-            parent.classList.add('wide'); 
-        } else if (ratio < 0.5) {
-            parent.classList.add('tall'); 
-        } else {
-            parent.classList.add('standard'); 
-        }
-    }
-
-    // 1件分のログをDOMに描画
-    function renderLog(log, container) {
-        const entry = document.createElement('div');
-        entry.className = 'log-entry';
-
-        const ts = document.createElement('div');
-        ts.className = 'timestamp';
-        ts.textContent = log.timestamp;
-        entry.appendChild(ts);
-
-        const content = document.createElement('div');
-        content.className = 'content';
-        content.innerHTML = linkify(log.content);
-        entry.appendChild(content);
-
-        if (log.photos && log.photos.length > 0) {
-            const photoContainer = document.createElement('div');
-            photoContainer.className = 'photo-container';
-            
-            log.photos.forEach(src => {
-                const photoItem = document.createElement('div');
-                photoItem.className = 'photo-item';
-                
-                const img = document.createElement('img');
-                img.src = src;
-                img.alt = "";
-                img.onerror = () => photoItem.remove();
-                img.onload = () => handleImageLoad(img);
-                
-                photoItem.appendChild(img);
-                photoContainer.appendChild(photoItem);
-            });
-            entry.appendChild(photoContainer);
-        }
-
-        container.appendChild(entry);
-
-        const hr = document.createElement('hr');
-        hr.className = 'separator';
-        container.appendChild(hr);
-    }
-
-    // 次の30件を表示
-    function renderNextPage() {
-        const container = document.getElementById('log-container');
-        const loadMoreContainer = document.getElementById('load-more-container');
-
-        const next = allLogs.slice(renderedCount, renderedCount + PER_PAGE);
-        next.forEach(log => renderLog(log, container));
-        renderedCount += next.length;
-
-        // まだ残りがあればボタン表示、なければ非表示
-        if (renderedCount < allLogs.length) {
-            loadMoreContainer.style.display = 'block';
-        } else {
-            loadMoreContainer.style.display = 'none';
-        }
-    }
-
-    // 初回：logs.json を取得
-    async function init() {
-        const loading = document.getElementById('loading');
-        try {
-            // ?t=... を付けてブラウザキャッシュを回避（常に最新を取得）
-            const response = await fetch(`${JSON_URL}?t=${Date.now()}`);
-            const data = await response.json();
-
-            loading.style.display = 'none';
-
-            allLogs = data.logs || [];
-
-            if (allLogs.length === 0) {
-                document.getElementById('log-container').innerHTML = '<p>No logs found.</p>';
-                return;
-            }
-
-            renderNextPage(); // 最初の30件を表示
-
-        } catch (error) {
-            console.error("Error fetching logs:", error);
-            loading.innerHTML = '読み込みに失敗しました。<span style="color:#0000ff;cursor:pointer;margin-left:8px;" onclick="location.reload()">再試行</span>';
-        }
-    }
-
-    init();
-</script>
-
-</body>
-</html>
