@@ -163,15 +163,16 @@
 <p id="loading">Loading logs...</p>
 
 <div id="load-more-container">
-    <span id="load-more-btn" onclick="fetchLogs()">さらに読み込む</span>
+    <span id="load-more-btn" onclick="renderNextPage()">さらに読み込む</span>
 </div>
 
 <script>
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxHXpuN76e5Ha81V_6f7kCZlMfFM2pq_wIPtnG77DkNhVPbqGLJxosfmdiQX5FjkJ2t/exec";
+    // logs.json を読む（同じリポジトリ内）。キャッシュ回避に日時パラメータを付与
+    const JSON_URL = "logs.json";
+    const PER_PAGE = 30; // 1回に表示する件数
 
-    // 通信制御
-    let currentPage = 1;
-    let isFetching = false;
+    let allLogs = [];      // 全データを保持
+    let renderedCount = 0; // すでに表示した件数
 
     function toggleLogo(btn) {
         const logo = document.getElementById('logo');
@@ -202,151 +203,91 @@
         }
     }
 
-    // タイムアウト付きfetch（15秒・最大2回リトライ）
-    async function fetchWithRetry(url, timeout = 15000, maxRetry = 2) {
-        for (let attempt = 0; attempt <= maxRetry; attempt++) {
-            const controller = new AbortController();
-            const timer = setTimeout(() => controller.abort(), timeout);
-            try {
-                const response = await fetch(url, { signal: controller.signal });
-                clearTimeout(timer);
-                return response;
-            } catch (err) {
-                clearTimeout(timer);
-                if (attempt < maxRetry) {
-                    await new Promise(res => setTimeout(res, 1000)); // 1秒待ってリトライ
-                } else {
-                    throw err;
-                }
-            }
-        }
-    }
+    // 1件分のログをDOMに描画
+    function renderLog(log, container) {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
 
-    // ローディング経過時間カウンター
-    let loadingTimer = null;
-    function startLoadingTimer(el) {
-        let sec = 0;
-        el.textContent = `Loading logs...`;
-        loadingTimer = setInterval(() => {
-            sec++;
-            el.textContent = `Loading logs... ${sec}秒`;
-        }, 1000);
-    }
-    function stopLoadingTimer(el) {
-        clearInterval(loadingTimer);
-        loadingTimer = null;
-    }
+        const ts = document.createElement('div');
+        ts.className = 'timestamp';
+        ts.textContent = log.timestamp;
+        entry.appendChild(ts);
 
-    // データ取得と表示（サーバーサイドページネーション）
-    async function fetchLogs() {
-        if (isFetching) return; 
-        isFetching = true;
+        const content = document.createElement('div');
+        content.className = 'content';
+        content.innerHTML = linkify(log.content);
+        entry.appendChild(content);
 
-        const loading = document.getElementById('loading');
-        const loadMoreContainer = document.getElementById('load-more-container');
-        const loadMoreBtn = document.getElementById('load-more-btn');
-
-        if (currentPage === 1) {
-            loading.style.display = 'block';
-            startLoadingTimer(loading);
-        } else {
-            loadMoreBtn.textContent = '読み込み中...';
-        }
-        loadMoreContainer.style.display = 'none';
-
-        try {
-            const targetUrl = `${GAS_API_URL}?page=${currentPage}`;
-            const response = await fetchWithRetry(targetUrl);
-            const data = await response.json();
+        if (log.photos && log.photos.length > 0) {
+            const photoContainer = document.createElement('div');
+            photoContainer.className = 'photo-container';
             
-            stopLoadingTimer(loading);
-            loading.style.display = 'none';
-            const container = document.getElementById('log-container');
+            log.photos.forEach(src => {
+                const photoItem = document.createElement('div');
+                photoItem.className = 'photo-item';
+                
+                const img = document.createElement('img');
+                img.src = src;
+                img.alt = "";
+                img.onerror = () => photoItem.remove();
+                img.onload = () => handleImageLoad(img);
+                
+                photoItem.appendChild(img);
+                photoContainer.appendChild(photoItem);
+            });
+            entry.appendChild(photoContainer);
+        }
 
-            if (currentPage === 1 && (!data.logs || data.logs.length === 0)) {
-                container.innerHTML = '<p>No logs found.</p>';
-                isFetching = false;
+        container.appendChild(entry);
+
+        const hr = document.createElement('hr');
+        hr.className = 'separator';
+        container.appendChild(hr);
+    }
+
+    // 次の30件を表示
+    function renderNextPage() {
+        const container = document.getElementById('log-container');
+        const loadMoreContainer = document.getElementById('load-more-container');
+
+        const next = allLogs.slice(renderedCount, renderedCount + PER_PAGE);
+        next.forEach(log => renderLog(log, container));
+        renderedCount += next.length;
+
+        // まだ残りがあればボタン表示、なければ非表示
+        if (renderedCount < allLogs.length) {
+            loadMoreContainer.style.display = 'block';
+        } else {
+            loadMoreContainer.style.display = 'none';
+        }
+    }
+
+    // 初回：logs.json を取得
+    async function init() {
+        const loading = document.getElementById('loading');
+        try {
+            // ?t=... を付けてブラウザキャッシュを回避（常に最新を取得）
+            const response = await fetch(`${JSON_URL}?t=${Date.now()}`);
+            const data = await response.json();
+
+            loading.style.display = 'none';
+
+            allLogs = data.logs || [];
+
+            if (allLogs.length === 0) {
+                document.getElementById('log-container').innerHTML = '<p>No logs found.</p>';
                 return;
             }
 
-            // 取得データ（最大30件）を追加
-            data.logs.forEach(log => {
-                const entry = document.createElement('div');
-                entry.className = 'log-entry';
-
-                // 日付
-                const ts = document.createElement('div');
-                ts.className = 'timestamp';
-                ts.textContent = log.timestamp;
-                entry.appendChild(ts);
-
-                // 本文
-                const content = document.createElement('div');
-                content.className = 'content';
-                content.innerHTML = linkify(log.content);
-                entry.appendChild(content);
-
-                // 写真
-                if (log.photos && log.photos.length > 0) {
-                    const photoContainer = document.createElement('div');
-                    photoContainer.className = 'photo-container';
-                    
-                    log.photos.forEach(src => {
-                        const photoItem = document.createElement('div');
-                        photoItem.className = 'photo-item';
-                        
-                        const img = document.createElement('img');
-                        img.src = src;
-                        img.alt = "";
-                        img.onerror = () => photoItem.remove();
-                        img.onload = () => handleImageLoad(img);
-                        
-                        photoItem.appendChild(img);
-                        photoContainer.appendChild(photoItem);
-                    });
-                    entry.appendChild(photoContainer);
-                }
-
-                container.appendChild(entry);
-
-                // 区切り線
-                const hr = document.createElement('hr');
-                hr.className = 'separator';
-                container.appendChild(hr);
-            });
-
-            // hasNext: trueの場合のみボタンを表示
-            if (data.hasNext) {
-                loadMoreContainer.style.display = 'block';
-                loadMoreBtn.textContent = 'さらに読み込む';
-                currentPage++;
-            }
+            renderNextPage(); // 最初の30件を表示
 
         } catch (error) {
-            stopLoadingTimer(loading);
             console.error("Error fetching logs:", error);
-            if (currentPage === 1) {
-                loading.style.display = 'block';
-                loading.innerHTML = '読み込みに失敗しました。<span id="retry-btn" style="color:#0000ff;cursor:pointer;margin-left:8px;" onclick="retryFetch()">再試行</span>';
-            } else {
-                loadMoreBtn.textContent = '読み込み失敗 - もう一度試す';
-                loadMoreContainer.style.display = 'block';
-            }
-        } finally {
-            isFetching = false;
+            loading.innerHTML = '読み込みに失敗しました。<span style="color:#0000ff;cursor:pointer;margin-left:8px;" onclick="location.reload()">再試行</span>';
         }
     }
 
-    // 再試行（初回失敗時用）
-    function retryFetch() {
-        const loading = document.getElementById('loading');
-        loading.textContent = 'Loading logs...';
-        startLoadingTimer(loading);
-        fetchLogs();
-    }
-
-    // 初回読み込み
-    fetchLogs();
+    init();
 </script>
 
 </body>
