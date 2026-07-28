@@ -202,6 +202,41 @@
         }
     }
 
+    // タイムアウト付きfetch（15秒・最大2回リトライ）
+    async function fetchWithRetry(url, timeout = 15000, maxRetry = 2) {
+        for (let attempt = 0; attempt <= maxRetry; attempt++) {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), timeout);
+            try {
+                const response = await fetch(url, { signal: controller.signal });
+                clearTimeout(timer);
+                return response;
+            } catch (err) {
+                clearTimeout(timer);
+                if (attempt < maxRetry) {
+                    await new Promise(res => setTimeout(res, 1000)); // 1秒待ってリトライ
+                } else {
+                    throw err;
+                }
+            }
+        }
+    }
+
+    // ローディング経過時間カウンター
+    let loadingTimer = null;
+    function startLoadingTimer(el) {
+        let sec = 0;
+        el.textContent = `Loading logs...`;
+        loadingTimer = setInterval(() => {
+            sec++;
+            el.textContent = `Loading logs... ${sec}秒`;
+        }, 1000);
+    }
+    function stopLoadingTimer(el) {
+        clearInterval(loadingTimer);
+        loadingTimer = null;
+    }
+
     // データ取得と表示（サーバーサイドページネーション）
     async function fetchLogs() {
         if (isFetching) return; 
@@ -213,17 +248,18 @@
 
         if (currentPage === 1) {
             loading.style.display = 'block';
+            startLoadingTimer(loading);
         } else {
             loadMoreBtn.textContent = '読み込み中...';
         }
         loadMoreContainer.style.display = 'none';
 
         try {
-            // URLパラメータへページ数付与・GASへ連携
             const targetUrl = `${GAS_API_URL}?page=${currentPage}`;
-            const response = await fetch(targetUrl);
+            const response = await fetchWithRetry(targetUrl);
             const data = await response.json();
             
+            stopLoadingTimer(loading);
             loading.style.display = 'none';
             const container = document.getElementById('log-container');
 
@@ -287,12 +323,26 @@
             }
 
         } catch (error) {
+            stopLoadingTimer(loading);
             console.error("Error fetching logs:", error);
-            loading.style.display = 'block';
-            loading.textContent = "Failed to load logs.";
+            if (currentPage === 1) {
+                loading.style.display = 'block';
+                loading.innerHTML = '読み込みに失敗しました。<span id="retry-btn" style="color:#0000ff;cursor:pointer;margin-left:8px;" onclick="retryFetch()">再試行</span>';
+            } else {
+                loadMoreBtn.textContent = '読み込み失敗 - もう一度試す';
+                loadMoreContainer.style.display = 'block';
+            }
         } finally {
             isFetching = false;
         }
+    }
+
+    // 再試行（初回失敗時用）
+    function retryFetch() {
+        const loading = document.getElementById('loading');
+        loading.textContent = 'Loading logs...';
+        startLoadingTimer(loading);
+        fetchLogs();
     }
 
     // 初回読み込み
