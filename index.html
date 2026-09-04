@@ -123,13 +123,13 @@
                 width: calc(25% - 10.5px); 
             }
             .photo-item.wide {
-                width: 70%;
+                width: 60%;
             }
             .photo-item.tall {
                 width: auto;
             }
             .photo-item.tall img {
-                max-height: 70vh;
+                max-height: 60vh;
                 width: auto;
             }
         }
@@ -198,12 +198,12 @@
     }
 
     function linkify(text) {
-        // 1. [表示文字](URL) を <a>表示文字</a> に変換
+        // 1. まず [表示文字](URL) を <a>表示文字</a> に変換
         const mdPattern = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
         let result = text.replace(mdPattern, '<a href="$2" target="_blank">$1</a>');
 
-        // 2.URLを変換
-        // （すでに href="..." の中にあるURLは対象外にする）
+        // 2. 次に、まだリンクになっていない素のURLを変換
+        //    （すでに href="..." の中にあるURLは対象外にする）
         const urlPattern = /(?<!["=])(https?:\/\/[^\s<]+)/g;
         result = result.replace(urlPattern, '<a href="$1" target="_blank">$1</a>');
 
